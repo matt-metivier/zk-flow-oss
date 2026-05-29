@@ -1,0 +1,35 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "DiscoverOutput",
+  "description": "Output of the discover phase: which skills to load + which vault notes are relevant + which related/parent beads downstream phases should read. Written to the worktree as discover.json and read by downstream phase prompts.",
+  "type": "object",
+  "required": ["skills", "vault_paths", "related_beads", "rationale"],
+  "properties": {
+    "skills": {
+      "type": "array",
+      "description": "Skill IDs to load for the rest of the lifecycle. The discover agent prunes to the relevant ones; downstream phases load these skills from $ZK_ARTIFACTS_DIR/skills/<id>/SKILL.md.",
+      "items": {"type": "string"}
+    },
+    "vault_paths": {
+      "type": "array",
+      "description": "Vault note paths (under zk-artifacts/vault/) the task should reference. Routed by topic-match + path heuristics (Notes/Architecture/, Notes/Work/<Company>/...).",
+      "items": {"type": "string"}
+    },
+    "related_beads": {
+      "type": "array",
+      "description": "Bead IDs in the dependency graph the task should read for context (parent specs, related fixes, related research).",
+      "items": {"type": "string", "pattern": "^[a-z0-9-]+$"}
+    },
+    "rationale": {
+      "type": "string",
+      "description": "Why these skills / paths / beads were selected. Short prose (1-3 sentences).",
+      "maxLength": 2000
+    },
+    "iteration": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Iteration index (0 = first discover pass; rare but allowed if downstream redrives discovery)."
+    }
+  },
+  "additionalProperties": false
+}

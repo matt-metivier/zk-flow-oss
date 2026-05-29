@@ -1,0 +1,32 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "SolutionOutput",
+  "description": "Extracted solutions and reusable patterns from a completed task.",
+  "type": "object",
+  "required": ["outcome", "task_id", "agent", "entries_extracted", "solutions"],
+  "properties": {
+    "outcome": {
+      "type": "string",
+      "const": "evidence_complete",
+      "description": "Must be 'evidence_complete' when the task succeeds"
+    },
+    "task_id": { "type": "string" },
+    "agent": { "type": "string" },
+    "entries_extracted": { "type": "integer" },
+    "entries_skipped": { "type": "integer" },
+    "solutions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "content": { "type": "string" },
+          "category": { "type": "string" },
+          "evidence_quality": { "type": "string", "enum": ["strong", "adequate", "weak"] },
+          "problem": { "type": ["string", "null"] },
+          "approach": { "type": ["string", "null"] },
+          "reusable_pattern": { "type": ["string", "null"] }
+        }
+      }
+    }
+  }
+}

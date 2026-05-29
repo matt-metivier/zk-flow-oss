@@ -1,0 +1,104 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ReviewOutput",
+  "description": "Structured output from a review council run",
+  "type": "object",
+  "required": ["verdict", "evidence_quality", "weighted_score", "findings"],
+  "properties": {
+    "verdict": {
+      "type": "string",
+      "enum": ["APPROVE", "REQUEST_CHANGES", "BLOCK"],
+      "description": "Overall review verdict"
+    },
+    "evidence_quality": {
+      "type": "string",
+      "enum": ["strong", "adequate", "weak"],
+      "description": "Evidence quality: strong=all claims verified, adequate=2+ sources, weak=insufficient"
+    },
+    "weighted_score": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "Weighted quality score incorporating severity and evidence quality of findings"
+    },
+    "findings": {
+      "type": "array",
+      "description": "All review findings from all perspectives, deduplicated and sorted",
+      "items": {
+        "type": "object",
+        "required": ["title", "severity", "file", "why_it_matters", "autofix_class", "owner", "evidence_quality", "evidence"],
+        "properties": {
+          "title": {
+            "type": "string",
+            "maxLength": 120,
+            "description": "Concise finding title"
+          },
+          "severity": {
+            "type": "string",
+            "enum": ["P0", "P1", "P2", "P3"],
+            "description": "P0=critical/blocking, P1=significant, P2=moderate, P3=minor/advisory"
+          },
+          "file": {
+            "type": "string",
+            "description": "File path where the finding applies"
+          },
+          "line": {
+            "type": ["integer", "null"],
+            "description": "Line number (null if applies to whole file)"
+          },
+          "why_it_matters": {
+            "type": "string",
+            "maxLength": 280,
+            "description": "Concrete failure mode or impact — not a vague concern"
+          },
+          "autofix_class": {
+            "type": "string",
+            "enum": ["safe_auto", "gated_auto", "manual", "advisory"],
+            "description": "safe_auto=apply automatically, gated_auto=needs approval, manual=design decision, advisory=informational"
+          },
+          "owner": {
+            "type": "string",
+            "enum": ["review_fixer", "downstream_resolver", "human", "release"],
+            "description": "Who should address this finding"
+          },
+          "requires_verification": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether the fix needs explicit verification before merge"
+          },
+          "evidence_quality": {
+            "type": "string",
+            "enum": ["strong", "adequate", "weak"],
+            "description": "Evidence quality for this finding (weak findings suppressed except P0)"
+          },
+          "evidence": {
+            "type": "array",
+            "minItems": 1,
+            "items": { "type": "string" },
+            "description": "Code-grounded references supporting this finding (at least 1 required)"
+          },
+          "pre_existing": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether this issue existed before the current changes (report but don't affect verdict)"
+          }
+        }
+      }
+    },
+    "perspectives_run": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Which review perspectives were executed (e.g. security, architecture, performance)"
+    },
+    "dedup_merges": {
+      "type": "integer",
+      "default": 0,
+      "description": "Number of duplicate findings merged during the merge pipeline"
+    },
+    "suppressed_below_threshold": {
+      "type": "integer",
+      "default": 0,
+      "description": "Number of findings suppressed due to weak evidence_quality threshold"
+    }
+  }
+}

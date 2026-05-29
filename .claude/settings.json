@@ -1,0 +1,10 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      { "matcher": "Read|Grep|Glob", "hooks": [ { "type": "prompt", "prompt": "If the target is source code, prefer MCP: Octocode LSP for definition/references, CodeGraphContext for callers/blast-radius, Repomix for directory overviews. Allow Read/Grep for non-code or multi-file regex." } ] }
+    ],
+    "PostToolUse": [
+      { "matcher": "Bash", "hooks": [ { "type": "command", "if": "Bash(git commit*)", "command": "cgc index 2>/dev/null || true" } ] }
+    ]
+  }
+}

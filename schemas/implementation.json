@@ -1,0 +1,108 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ImplementationOutput",
+  "description": "Output of the implementation phase: code change summary produced by scope-locked-editor. Validated by the workflow before pr-author runs.",
+  "type": "object",
+  "required": [
+    "outcome",
+    "files_changed",
+    "commits",
+    "tests_run",
+    "tests_passed",
+    "tests_failed",
+    "approach_rationale"
+  ],
+  "properties": {
+    "outcome": {
+      "type": "string",
+      "enum": [
+        "lifecycle_complete",
+        "pr_created",
+        "pr_updated",
+        "pr_pushed",
+        "branch_updated"
+      ],
+      "description": "Must be one of the lifecycle completion values"
+    },
+    "files_changed": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "file",
+          "change_type",
+          "description",
+          "lines_changed"
+        ],
+        "properties": {
+          "file": {
+            "type": "string"
+          },
+          "change_type": {
+            "type": "string",
+            "enum": [
+              "add",
+              "modify",
+              "delete"
+            ]
+          },
+          "description": {
+            "type": "string"
+          },
+          "lines_changed": {
+            "type": "integer"
+          }
+        }
+      }
+    },
+    "commits": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "sha",
+          "message"
+        ],
+        "properties": {
+          "sha": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "tests_run": {
+      "type": "boolean"
+    },
+    "tests_passed": {
+      "type": "integer"
+    },
+    "tests_failed": {
+      "type": "integer"
+    },
+    "approach_rationale": {
+      "type": "string"
+    },
+    "simplicity_check": {
+      "type": "object",
+      "required": [
+        "passed"
+      ],
+      "properties": {
+        "passed": {
+          "type": "boolean"
+        },
+        "overcomplications_found": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Specific overcomplication patterns found (single-caller abstractions, stdlib wrappers, unrequested config knobs, drive-by refactors)"
+        }
+      },
+      "description": "Simplicity-First self-check result"
+    }
+  }
+}
