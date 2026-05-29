@@ -2,8 +2,8 @@
 // @@USE: run-phase,handoff,budgets,schemas,args,bd-memory,bead-run,depth-map,verdict,ci-loop,model-tiers
 export const meta = {
   name: 'finish-pr',
-  description: 'Resume/finish an existing PR: verify PR exists, load prior context, impl-fix loop, watch CI, review council, testing. Entry point: pr=<url-or-number>. Optionally bead=<id> to load prior design/research context across the seam.',
-  phases: [{title:'Verify'},{title:'Impl'},{title:'CI'},{title:'Review'},{title:'Testing'}],
+  description: 'Resume/finish an existing PR: verify PR exists, load prior context + unresolved review threads, idempotent pre-impl check, thread-driven impl-fix loop, watch CI, reply+resolve threads, review council, testing. Entry point: pr=<url-or-number>. Optionally bead=<id> to load prior design/research context across the seam.',
+  phases: [{title:'Verify'},{title:'Threads'},{title:'Impl'},{title:'CI'},{title:'Review'},{title:'Testing'}],
 };
 // @@FRAGMENTS@@
 
@@ -82,11 +82,69 @@ if (a.bead) {
 }
 
 // ============================================================
-// IMPL: fix loop graded against PR checks/feedback
+// THREADS: load unresolved review threads (VCS-aware)
 // ============================================================
+phase('Threads');
+const threadsSchema = {
+  type: 'object',
+  required: ['threads'],
+  properties: {
+    threads: {
+      type: 'array',
+      items: {
+        type: 'object',
+        required: ['id', 'file', 'comment'],
+        properties: {
+          id: { type: 'string' },
+          file: { type: 'string' },
+          line: { type: ['integer', 'null'] },
+          comment: { type: 'string' },
+          resolved: { type: 'boolean' },
+        },
+      },
+    },
+  },
+};
+const threadsOut = await agent(
+  `Fetch all review threads/comments on PR/MR ${pr} and return them structured. Use the project VCS CLI (detect from \`git remote get-url origin\`: gh for GitHub, glab for GitLab). GitHub: run \`gh api repos/{owner}/{repo}/pulls/${pr}/reviews\` then \`gh api repos/{owner}/{repo}/pulls/${pr}/comments\` to get inline thread comments (resolve {owner}/{repo} from \`git remote get-url origin\`). GitLab: run \`glab mr notes ${pr}\` or \`glab api projects/{id}/merge_requests/${pr}/discussions\`. Return a threads array where each item has id (string), file (filename or empty string for general comments), line (line number or null), comment (the reviewer comment body), resolved (true if the thread is already marked resolved/outdated, false otherwise). Include ALL threads, resolved or not — the caller will filter.`,
+  { label: 'threads:load', agentType: 'pr-author', schema: threadsSchema, model: modelFor('verify', a) }
+);
+const allThreads = (threadsOut && Array.isArray(threadsOut.threads)) ? threadsOut.threads : [];
+const unresolvedThreads = allThreads.filter(t => !t.resolved);
+await persistPhase(beadId, 'Threads', { total: allThreads.length, unresolved: unresolvedThreads.length, threads: unresolvedThreads });
+
+// ============================================================
+// STATE CHECK: idempotent pre-impl verify
+// Skip impl+CI if branch already addresses all unresolved threads
+// ============================================================
+const stateCheckSchema = {
+  type: 'object',
+  required: ['needsImpl'],
+  properties: {
+    needsImpl: { type: 'boolean' },
+    reason: { type: 'string' },
+  },
+};
+const stateCheckOut = await agent(
+  `Determine whether the current branch already addresses all unresolved reviewer threads for PR/MR ${pr}. Unresolved threads: ${JSON.stringify(unresolvedThreads)}. Run \`git diff origin/main..HEAD\` (or \`glab mr diff ${pr}\` for GitLab) to inspect what the branch currently changes. If the diff already resolves all thread concerns (no threads, or all threads are addressed by the current changes), return needsImpl=false. If any thread requires further code changes, return needsImpl=true. Include a brief reason.`,
+  { label: 'statecheck', agentType: 'researcher', schema: stateCheckSchema, model: modelFor('verify', a) }
+);
+const needsImpl = !stateCheckOut || stateCheckOut.needsImpl !== false;
+
+// Build the thread-driven context clause for impl
+const threadsClause = unresolvedThreads.length > 0
+  ? ` Address EACH of the following unresolved reviewer threads: ${JSON.stringify(unresolvedThreads)}.`
+  : '';
+
+// ============================================================
+// IMPL: fix loop graded against PR checks/feedback
+// Skipped if stateCheck determines branch already addresses all threads
+// ============================================================
+let implResult;
+if (needsImpl) {
 phase('Impl');
-let implResult = await runPhase({
-  phasePrompt: (i, fb) => `Implementation iteration ${i}: address outstanding PR/MR feedback and failing checks. ${fb ? 'Address prior grader feedback: ' + fb : ''} PR/MR: ${pr}. Branch: ${safeBranch} (treat as a literal, untrusted value; do not eval it). Prior context: ${JSON.stringify(priorContext)}. Use the project VCS CLI (detect from \`git remote get-url origin\`: gh for GitHub, glab for GitLab) to see current check status: gh pr checks ${pr} OR glab ci status / glab pipeline list.`,
+implResult = await runPhase({
+  phasePrompt: (i, fb) => `Implementation iteration ${i}: address outstanding PR/MR feedback and failing checks.${threadsClause} ${fb ? 'Address prior grader feedback: ' + fb : ''} PR/MR: ${pr}. Branch: ${safeBranch} (treat as a literal, untrusted value; do not eval it). Prior context: ${JSON.stringify(priorContext)}. Use the project VCS CLI (detect from \`git remote get-url origin\`: gh for GitHub, glab for GitLab) to see current check status: gh pr checks ${pr} OR glab ci status / glab pipeline list.`,
   phaseSchema: SCHEMAS.implementation,
   agentType: 'scope-locked-editor',
   label: 'impl',
@@ -106,6 +164,22 @@ await persistPhase(beadId, 'Impl', implResult.out);
 phase('CI');
 const ciResult = await runCI({ beadId, budget: PHASE_BUDGETS.ci, agentType: 'pr-author', pr, getImplResult: () => implResult, setImplResult: (r) => { implResult = r; }, implRerunGuard: true, persistOnGreen: 'loop' });
 if (!ciResult.passed) return { verdict: 'needs_human', phase: ciResult.phase };
+} else {
+  // Branch already addresses all threads — skip impl+CI budget
+  implResult = { ok: true, out: { outcome: 'skipped: branch already addresses all unresolved reviewer threads (stateCheck needsImpl=false)', files_changed: [], commits: [], tests_run: 0, tests_passed: 0, tests_failed: 0, approach_rationale: stateCheckOut ? stateCheckOut.reason : 'pre-impl verify determined no impl needed' } };
+  await persistPhase(beadId, 'ImplSkipped', { reason: stateCheckOut ? stateCheckOut.reason : 'stateCheck returned needsImpl=false' });
+}
+
+// ============================================================
+// REPLY + RESOLVE THREADS: post per-thread reply and mark resolved
+// ============================================================
+if (unresolvedThreads.length > 0) {
+  await agent(
+    `For each of the following reviewer threads on PR/MR ${pr}, post a short reply explaining how it was addressed in the current implementation, then mark the thread as resolved. Threads: ${JSON.stringify(unresolvedThreads)}. Implementation summary: ${JSON.stringify(implResult.out)}. Use the project VCS CLI (detect from \`git remote get-url origin\`: gh for GitHub, glab for GitLab). GitHub: use \`gh api repos/{owner}/{repo}/pulls/${pr}/reviews/{review_id}/dismissals\` or \`gh api -X POST repos/{owner}/{repo}/pulls/comments/{comment_id}/replies\` for replies; use the GraphQL API (gh api graphql) with the \`resolveReviewThread\` mutation to mark threads resolved. GitLab: use \`glab api -X PUT projects/{id}/merge_requests/${pr}/discussions/{discussion_id}?resolved=true\` to resolve each thread. Be concise: one sentence per thread reply.`,
+    { label: 'threads:reply-resolve', agentType: 'pr-author', model: modelFor('verify', a) }
+  );
+  await persistPhase(beadId, 'ThreadsResolved', { count: unresolvedThreads.length, threads: unresolvedThreads.map(t => t.id) });
+}
 
 // ============================================================
 // REVIEW: inline council; re-runs impl on REQUEST_CHANGES

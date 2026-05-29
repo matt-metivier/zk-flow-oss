@@ -2,7 +2,7 @@
 // Task 0 finding: saved workflow commands pass free TEXT as `args`, not an object.
 // parseArgs turns "depth=full mode=interview" -> {depth:'full',mode:'interview'};
 // bare tokens collect under `_`. readArgs normalizes object|string|undefined -> object.
-const CONTROL_KEYS = ['depth','mode','maxIterations','startAt','targetEnv','window','autoApprove','perspectives','bead','brief','skipReview','pr','model','models','ideate','frames','topK'];
+const CONTROL_KEYS = ['depth','mode','maxIterations','startAt','targetEnv','window','autoApprove','perspectives','bead','brief','skipReview','pr','model','models','ideate','frames','topK','api','id','deleteSibling'];
 export function parseArgs(str) {
   if (!str || typeof str !== 'string') return {};
   const out = {};

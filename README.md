@@ -84,6 +84,8 @@ handoff: the workflow writes a continuation doc and stops; you resume it explici
 
 See [docs/architecture.md](docs/architecture.md) for the full five-layer breakdown, gate
 loop mechanics, the two-run `feature` seam, and schema validation contracts.
+See [docs/using-schemas-externally.md](docs/using-schemas-externally.md) for how to validate
+schema contracts when dispatching agents outside the /workflows runtime.
 
 > **Generated files:** `.claude/workflows/*.js` are built from `src/workflows/*.src.js` and
 > are gitignored. `npm run build` (or `npm install`) regenerates them. Never edit the
@@ -107,6 +109,7 @@ loop mechanics, the two-run `feature` seam, and schema validation contracts.
 | `grill` | Adversarial griller -> decider (interview or one-shot modes) | [docs/workflows/grill.md](docs/workflows/grill.md) |
 | `improve` | Cluster bead feedback -> propose -> verify -> grade -> stage (never auto-merges) | [docs/workflows/improve.md](docs/workflows/improve.md) |
 | `finish-pr` | Resume an open PR: verify -> load context -> impl-fix -> ci -> review -> testing (`pr=<url>`) | [docs/workflows/finish-pr.md](docs/workflows/finish-pr.md) |
+| `dashboard` | Fetch monitoring config JSON -> apply change -> verify; optional sibling delete (`api=` `id=` `brief=`) | [docs/workflows/dashboard.md](docs/workflows/dashboard.md) |
 
 ### Per-phase model tiers
 
@@ -155,13 +158,14 @@ src/
   workflows/     *.src.js workflow bodies (source of truth)
 build.js         build script: inlines fragments, writes .claude/workflows/*.js
 .claude/
-  agents/        21 subagent definitions (YAML frontmatter + prompt body)
+  agents/        22 subagent definitions (YAML frontmatter + prompt body)
   commands/      saved slash commands (one per workflow)
   workflows/     GENERATED -- gitignored, do not edit
 schemas/         JSON output contracts for each phase
 docs/
   architecture.md
   workflows/     per-workflow reference docs (args, agents, schemas, mermaid diagrams)
+  using-schemas-externally.md
   zk-artifacts-setup.md
 ```
 

@@ -21,7 +21,7 @@ export async function runCI({ beadId, budget, agentType, pr, getImplResult, setI
   let ciPassed = false;
   for (let ci = 1; ci <= budget; ci++) {
     const ciOut = await agent(
-      `CI check iteration ${ci}: run 'gh pr checks ${prClause}--watch' and report status. Return green=true if all checks pass, green=false if any fail. Include a summary of failing checks if any.`,
+      `CI check iteration ${ci}: watch CI for the PR/MR and report status. Detect the VCS host from \`git remote get-url origin\`. GitHub: run \`gh pr checks ${prClause}--watch\`. GitLab: run \`glab ci status\` or \`glab pipeline status\` (use whichever is available). Return green=true if all checks pass, green=false if any fail. Include a summary of failing checks if any.`,
       { label: `ci:${ci}`, agentType, schema: ciSchema }
     );
     if (ciOut && ciOut.green) {

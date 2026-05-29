@@ -1,6 +1,6 @@
 # finish-pr
 
-Resume/finish an existing PR (GitHub) or MR (GitLab): verify it exists, load prior design/research context (from a bead or the PR/MR diff), run a grade-gated impl-fix loop, watch CI, run an inline review council, then test in a target environment.
+Resume/finish an existing PR (GitHub) or MR (GitLab): verify it exists, load prior design/research context (from a bead or the PR/MR diff), fetch unresolved review threads, run an idempotent pre-impl state check, run a grade-gated thread-driven impl-fix loop (skipped if already done), watch CI, reply and resolve threads, run an inline review council, then test in a target environment.
 
 > **GitHub and GitLab.** finish-pr works with both. The `pr-author` agent detects the VCS host from `git remote get-url origin` at runtime: GitHub remotes use `gh` (`gh pr ...`), GitLab remotes use `glab` (`glab mr ...`) or fall back to the GitLab REST API with `$GITLAB_TOKEN` when `glab` is absent. Pass a GitHub PR URL, a GitLab MR URL (`https://<host>/group/.../project/-/merge_requests/N`), or a bare integer.
 
@@ -44,25 +44,38 @@ flowchart TD
   LoadDok -- yes --> LoadR[bd:load-research - research.json]
   LoadR --> LoadRok{valid?}
   LoadRok -- no --> Hlr[handoff: load-research-failed] --> NH
-  LoadRok -- yes --> Impl
+  LoadRok -- yes --> Threads
 
   Ctx -- no --> Diff[context:from-diff - research.json from PR diff]
   Diff --> Diffok{valid?}
   Diffok -- no --> Hdc[handoff: diff-context-failed] --> NH
-  Diffok -- yes --> Impl
+  Diffok -- yes --> Threads
 
-  Impl[Impl: fix loop, budget 2, grade-gated]
+  Threads[Threads: load all review threads VCS-aware\nfilter unresolved]
+  Threads --> StateCheck[stateCheck: does branch already address all unresolved threads?]
+  StateCheck --> NeedsImpl{needsImpl?}
+
+  NeedsImpl -- yes --> Impl
+  NeedsImpl -- no --> ImplSkip[ImplSkipped: persist skip reason\nno impl budget burned]
+  ImplSkip --> ReplyThreads
+
+  Impl[Impl: thread-driven fix loop, budget 2, grade-gated]
   Impl --> ImplOk{passed?}
   ImplOk -- no --> Hi[handoff: impl] --> NH
   ImplOk -- yes --> CI
 
-  CI[CI: gh pr checks --watch, budget 3]
+  CI[CI: gh pr checks --watch / glab ci status, budget 3]
   CI --> CIred{green?}
   CIred -- red, retries left --> CIfix[impl:ci-fix maxIter 1] --> CI
   CIfix --> CIfixOk{ci-fix ok?}
   CIfixOk -- no --> Hcf[handoff: ci-fix] --> NH
   CIred -- exhausted --> Hci[handoff: ci] --> NH
-  CIred -- green --> Review
+  CIred -- green --> ReplyThreads
+
+  ReplyThreads{unresolved threads?}
+  ReplyThreads -- no --> Review
+  ReplyThreads -- yes --> Reply[threads:reply-resolve\npost reply per thread + mark resolved]
+  Reply --> Review
 
   Review{skipReview?}
   Review -- yes --> ReviewDone[verdict=APPROVE, route=done]
@@ -95,9 +108,12 @@ All agent names below are confirmed present under `.claude/agents/`. Model tier 
 | Agent | Phase | Role | Model tier (default) |
 |---|---|---|---|
 | `pr-author` | Verify; all handoffs; CI/handoff calls | Runs `gh pr view`/`gh pr checks`, verifies PR exists, writes handoff docs on every failure exit | verify=`fast`, persist=`fast` |
+| `pr-author` | Threads (load) | Fetches all review threads/comments (GitHub: `gh api`; GitLab: `glab mr notes`/`glab api`); returns structured thread list | verify=`fast` |
+| `researcher` | stateCheck | Given unresolved threads + `git diff origin/main..HEAD`, determines if branch already addresses all threads; returns `{needsImpl, reason}` | verify=`fast` |
 | `researcher` | Context load (bead path); all `persistPhase`/GraderFeedback writes | Reconstructs design/research from bead; runs `bd comment` persistence shell | verify=`fast` (load), persist=`fast` |
 | `researcher` | Context load (diff path) | Synthesizes a research-shaped summary from `gh pr diff`/`gh pr view` | research=`mid` |
-| `scope-locked-editor` | Impl; impl ci-fix; impl review-fix | Makes scoped edits/commits in `$PWD` to address feedback and failing checks | impl=`deep` |
+| `pr-author` | Threads (reply+resolve) | Posts a short reply per addressed thread and marks it resolved; VCS-aware (GitHub: GraphQL `resolveReviewThread`; GitLab: `glab api discussions?resolved=true`) | verify=`fast` |
+| `scope-locked-editor` | Impl; impl ci-fix; impl review-fix | Makes scoped edits/commits in `$PWD` to address unresolved reviewer threads and failing checks | impl=`deep` |
 | `grader` | Grade step of every `runPhase` loop (impl, ci-fix, review-fix, testing) | Scores phase output against the phase rubric, emits `review.json` verdict that gates the loop | grade=`deep` |
 | `advocate`,`critic`,`security`,`performance`,`learning` | Review council (parallel) | Each reviews `gh pr diff` from its perspective | review=`mid` |
 | `arbiter` | Review council synthesis | Merges duplicate findings, emits the council's `review.json` verdict | grade=`deep` |
@@ -114,6 +130,8 @@ Each is validated via `SCHEMAS.<x>` (mapped to `schemas/<x>.json`). The grade st
 | Verify | inline (not a SCHEMAS entry) | `required: [exists]`; optional `branch` |
 | Context load (bead) | `SCHEMAS.design` + `SCHEMAS.research` | design: `outcome, overview, approach, test_strategy`; research: `outcome, task_context, key_findings, evidence_quality` |
 | Context load (diff) | `SCHEMAS.research` | `outcome, task_context, key_findings, evidence_quality` |
+| Threads (load) | inline | `required: [threads]`; items: `required: [id, file, comment]`; optional `line` (integer or null), `resolved` (boolean) |
+| stateCheck | inline | `required: [needsImpl]` (boolean); optional `reason` (string) |
 | Impl (+ci-fix, +review-fix) | `SCHEMAS.implementation` | `outcome, files_changed, commits, tests_run, tests_passed, tests_failed, approach_rationale` |
 | CI | inline (not a SCHEMAS entry) | `required: [green]`; optional `summary` |
 | Review (arbiter) + every grade | `SCHEMAS.review` | `verdict, evidence_quality, weighted_score, findings` |
@@ -132,7 +150,7 @@ Declared in the file's `// @@USE:` header and inlined at build time:
 - `bead-run` — `runBeadId` (derive run bead id) and `persistPhase` (write a typed phase payload to the bead via a `researcher`).
 - `depth-map` — `DEFAULT_PERSPECTIVES`, `validPerspectives` (council perspective selection/whitelist); `REVIEW_DEPTHS`/`criteriaForDepth` defined but unused here.
 - `verdict` — `routeVerdict`: maps `APPROVE->done`, `REQUEST_CHANGES->impl`, `BLOCK`/unknown->`needs_human`.
-- `ci-loop` — `runCI`: bounded CI-watch loop with impl re-run on red. Here configured `agentType:'pr-author'`, `pr` injected, `implRerunGuard:true`, `persistOnGreen:'loop'`.
+- `ci-loop` — `runCI`: bounded CI-watch loop with impl re-run on red. Here configured `agentType:'pr-author'`, `pr` injected, `implRerunGuard:true`, `persistOnGreen:'loop'`. VCS-aware: GitHub uses `gh pr checks --watch`, GitLab uses `glab ci status`/`glab pipeline status`.
 - `model-tiers` — `MODEL_TIERS`, `PHASE_TIER`, `modelFor`: per-phase tier resolution with `model=`/`models=` overrides.
 
 ## Skills & prompts
@@ -150,12 +168,18 @@ Budgets (from `PHASE_BUDGETS`): Impl 2 iterations, CI 3 watch cycles, council 3 
 - `pr=` is missing (`handoff:no-pr`) or not a valid integer/GitHub PR URL/GitLab MR URL (`handoff:invalid-pr`).
 - Verify reports the PR does not exist (`handoff:verify-failed`).
 - bead-path load fails to produce a schema-valid design or research (`handoff:load-design-failed` / `handoff:load-research-failed`); diff-path fails to derive research (`handoff:diff-context-failed`).
-- Impl loop exhausts budget without an APPROVE grade (`handoff:impl`).
-- CI fails to go green within budget (`handoff:ci`), or a CI-fix impl re-run fails (`handoff:ci-fix`, via `implRerunGuard:true`).
+- Impl loop exhausts budget without an APPROVE grade (`handoff:impl`). (Skipped when stateCheck returns `needsImpl=false`.)
+- CI fails to go green within budget (`handoff:ci`), or a CI-fix impl re-run fails (`handoff:ci-fix`, via `implRerunGuard:true`). (Skipped on the needsImpl=false path.)
 - Review verdict routes to `needs_human` (`BLOCK` or unknown) (`handoff:review`), or a review-fix impl re-run fails (`handoff:review-fix`).
 - Testing loop exhausts budget without an APPROVE grade (`handoff:testing`).
 
 Review routing (`routeVerdict` on the arbiter's verdict): `APPROVE` breaks the council loop as done; `REQUEST_CHANGES` triggers a single `impl:review-fix` re-run (only if rounds remain) and re-runs the council; `BLOCK`/unknown breaks to `needs_human`. After the loop, `route !== 'done'` (e.g. council budget exhausted without APPROVE) also escalates. `skipReview=true` bypasses the council entirely with a synthetic `APPROVE`.
+
+**Idempotent skip:** If stateCheck determines the branch already addresses all unresolved reviewer threads (`needsImpl=false`), both the Impl and CI phases are skipped. A synthetic `implResult` is created with `outcome='skipped: branch already addresses all unresolved reviewer threads'` so downstream phases (review council, testing) receive a valid implementation object. No impl or CI budget is burned.
+
+**Thread reply/resolve:** After impl+CI (or after the idempotent skip), if any unresolved threads were found in the Threads phase, the `pr-author` agent posts a short reply per thread and marks each resolved. This step is a no-op when the PR has no unresolved threads.
+
+**CI parity (GitLab):** `ci-loop.js` is VCS-aware. The CI-watch agent prompt instructs it to detect the host from `git remote get-url origin` and use `gh pr checks --watch` for GitHub or `glab ci status`/`glab pipeline status` for GitLab. This applies to all three callers of `runCI` (feature, bugfix, finish-pr).
 
 Improve hook: regardless of outcome, the review verdict is persisted to bead `improve` as a `GraderFeedback` entry before the final route check.
 

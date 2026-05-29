@@ -35,7 +35,7 @@ Claude Code session inside this repo.
 
 ### 2. Agents -- the workers (prompt + model + tools)
 - `.claude/agents/<name>.md`: YAML frontmatter (`name`, `description`, `model`, `tools`) + a
-  prompt body. 31 agents, flat (no subdirs -- flat is what `agentType` resolves).
+  prompt body. 22 agents, flat (no subdirs -- flat is what `agentType` resolves).
 - A workflow spawns one with `agent(prompt, { agentType: 'researcher', schema: SCHEMAS.research })`.
 - **Execution contract:** an agent's FINAL message is its structured JSON output; the workflow
   captures + validates it via `schema:`. Agents do NOT write phase output to a bead, do NOT call
@@ -150,6 +150,7 @@ available for future `runCI` extension.
 | `grill` | adversarial griller -> decider (interview / one-shot modes) |
 | `improve` | (manual) cluster beads feedback -> propose -> verify -> grade -> stage (never auto-merge) |
 | `finish-pr` | verify PR -> load context -> impl-fix -> ci -> review -> testing (resume an open PR via pr=<url>) |
+| `dashboard` | fetch monitoring dashboard config JSON -> apply change -> verify; optional sibling delete (ops pattern, no code change) |
 
 ## Per-workflow reference docs
 Each workflow has a dedicated doc (command + args, agents, schemas, fragments, skills/prompts,
@@ -159,6 +160,7 @@ workflow + an index grouping them by type and summarizing the 8 schemas.
 ## Docs
 - This architecture overview: `docs/architecture.md`
 - Per-workflow reference docs (with mermaid): `docs/workflows/` (see its `README.md`)
+- Using zk-flow schemas outside the /workflows runtime: `docs/using-schemas-externally.md`
 - Setting up your own artifacts companion: `docs/zk-artifacts-setup.md`
 - Project README: `../README.md`
 

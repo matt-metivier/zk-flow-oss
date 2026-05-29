@@ -11,7 +11,7 @@ the build pipeline.
 
 ## Workflow types
 
-The 12 workflows fall into four groups.
+The 13 workflows fall into five groups.
 
 ### Lifecycles
 End-to-end pipelines that take a task from intake to a finished change.
@@ -35,6 +35,10 @@ Parallel-perspective or adversarial steps that lifecycles call into (and that al
 
 ### Maintenance
 - [improve](./improve.md) -- (manual) cluster beads feedback -> propose -> verify -> grade -> stage (never auto-merges).
+
+### Ops
+Recurring operations on live infrastructure and external services.
+- [dashboard](./dashboard.md) -- fetch monitoring dashboard config JSON from a REST API -> apply a requested change -> verify by re-GETting. Optional sibling-dashboard delete. Generic across monitoring tools; Grafana is the concrete reference implementation.
 
 ## Schemas
 
