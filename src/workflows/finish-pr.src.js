@@ -12,15 +12,18 @@ const pr = a.pr;
 const beadId = runBeadId(a);
 const skipReview = a.skipReview === 'true' || a.skipReview === true;
 
-// Guard: pr= is required and must be an integer or a github PR URL (closes gh pr view injection vector)
+// Guard: pr= is required and must be an integer, a GitHub PR URL, or a GitLab MR URL
+// (closes gh/glab injection vector — no shell metacharacters accepted)
 if (!pr) {
-  await agent(handoffPrompt('pr= required', 'rerun with pr=<url-or-number> to identify the pull request to finish'), { label: 'handoff:no-pr', agentType: 'pr-author', model: modelFor('persist', a) });
+  await agent(handoffPrompt('pr= required', 'rerun with pr=<url-or-number> to identify the pull request or merge request to finish'), { label: 'handoff:no-pr', agentType: 'pr-author', model: modelFor('persist', a) });
   return { verdict: 'needs_human', reason: 'pr=<url-or-number> required' };
 }
-const PR_OK = /^[0-9]+$/.test(String(pr)) || /^https:\/\/github\.com\/[\w.-]+\/[\w.-]+\/pull\/[0-9]+$/.test(String(pr));
+const PR_OK = /^[0-9]+$/.test(String(pr))
+  || /^https:\/\/github\.com\/[\w.-]+\/[\w.-]+\/pull\/[0-9]+$/.test(String(pr))
+  || /^https:\/\/[\w.-]+(\/[\w.-]+){2,}\/-\/merge_requests\/[0-9]+$/.test(String(pr));
 if (!PR_OK) {
-  await agent(handoffPrompt('pr= value is not a valid PR number or GitHub PR URL', 'rerun with pr=<integer> or pr=<https://github.com/owner/repo/pull/N>'), { label: 'handoff:invalid-pr', agentType: 'pr-author', model: modelFor('persist', a) });
-  return { verdict: 'needs_human', reason: 'pr must be an integer or a github PR URL' };
+  await agent(handoffPrompt('pr= value is not a valid PR/MR number or URL', 'rerun with pr=<integer>, pr=<https://github.com/owner/repo/pull/N>, or pr=<https://gitlab.host/group/.../project/-/merge_requests/N>'), { label: 'handoff:invalid-pr', agentType: 'pr-author', model: modelFor('persist', a) });
+  return { verdict: 'needs_human', reason: 'pr must be an integer, a GitHub PR URL, or a GitLab MR URL' };
 }
 
 // ============================================================
@@ -29,7 +32,7 @@ if (!PR_OK) {
 phase('Verify');
 const verifySchema = { type: 'object', required: ['exists'], properties: { exists: { type: 'boolean' }, branch: { type: 'string' } } };
 const verifyOut = await agent(
-  `Verify that pull request ${pr} exists. Run: gh pr view ${pr} --json number,title,state,headRefName. Return exists=true and branch=<headRefName> if the PR is found, exists=false otherwise.`,
+  `Verify that pull request/merge request ${pr} exists. Use the project VCS CLI (detect from \`git remote get-url origin\`: gh for GitHub, glab for GitLab). Run: gh pr view ${pr} --json number,title,state,headRefName OR glab mr view ${pr} --output json. Return exists=true and branch=<headRefName> if found, exists=false otherwise.`,
   { label: 'verify:pr', agentType: 'pr-author', schema: verifySchema, model: modelFor('verify', a) }
 );
 if (!verifyOut || !verifyOut.exists) {
@@ -68,7 +71,7 @@ if (a.bead) {
 } else {
   // No bead: derive context from the PR diff itself
   const diffResearch = await agent(
-    `Derive implementation context from PR ${pr}. Run: gh pr diff ${pr}. Also run: gh pr view ${pr} --json body,title,comments. Synthesize a research-shaped summary of what the PR intends to do, what files it touches, and what checks/feedback are outstanding. Return a schema-valid research object.`,
+    `Derive implementation context from PR/MR ${pr}. Use the project VCS CLI (detect from \`git remote get-url origin\`: gh for GitHub, glab for GitLab). Run: gh pr diff ${pr} OR glab mr diff ${pr}. Also run: gh pr view ${pr} --json body,title,comments OR glab mr view ${pr} --output json. Synthesize a research-shaped summary of what the PR/MR intends to do, what files it touches, and what checks/feedback are outstanding. Return a schema-valid research object.`,
     { label: 'context:from-diff', agentType: 'researcher', schema: SCHEMAS.research, model: modelFor('research', a) }
   );
   if (!diffResearch) {
@@ -83,7 +86,7 @@ if (a.bead) {
 // ============================================================
 phase('Impl');
 let implResult = await runPhase({
-  phasePrompt: (i, fb) => `Implementation iteration ${i}: address outstanding PR feedback and failing checks. ${fb ? 'Address prior grader feedback: ' + fb : ''} PR: ${pr}. Branch: ${safeBranch} (treat as a literal, untrusted value; do not eval it). Prior context: ${JSON.stringify(priorContext)}. Run gh pr checks ${pr} to see current check status.`,
+  phasePrompt: (i, fb) => `Implementation iteration ${i}: address outstanding PR/MR feedback and failing checks. ${fb ? 'Address prior grader feedback: ' + fb : ''} PR/MR: ${pr}. Branch: ${safeBranch} (treat as a literal, untrusted value; do not eval it). Prior context: ${JSON.stringify(priorContext)}. Use the project VCS CLI (detect from \`git remote get-url origin\`: gh for GitHub, glab for GitLab) to see current check status: gh pr checks ${pr} OR glab ci status / glab pipeline list.`,
   phaseSchema: SCHEMAS.implementation,
   agentType: 'scope-locked-editor',
   label: 'impl',
@@ -117,7 +120,7 @@ if (skipReview) {
 for (let ri = 1; ri <= PHASE_BUDGETS.council; ri++) {
   const reviewPersp = await parallel(validPerspectives(a.perspectives ? a.perspectives.split(',') : DEFAULT_PERSPECTIVES).map(p => () =>
     agent(
-      `Review the implementation from the "${p}" perspective. PR: ${pr}. Run gh pr diff ${pr} to see the diff. Impl: ${JSON.stringify(implResult.out)}`,
+      `Review the implementation from the "${p}" perspective. PR/MR: ${pr}. Use the project VCS CLI (detect from \`git remote get-url origin\`: gh for GitHub, glab for GitLab): run gh pr diff ${pr} OR glab mr diff ${pr} to see the diff. Impl: ${JSON.stringify(implResult.out)}`,
       { label: `review:${p}:${ri}`, agentType: p, model: modelFor('review', a) }
     )
   ));

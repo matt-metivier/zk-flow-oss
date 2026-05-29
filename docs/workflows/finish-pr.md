@@ -1,6 +1,8 @@
 # finish-pr
 
-Resume/finish an existing PR: verify it exists, load prior design/research context (from a bead or the PR diff), run a grade-gated impl-fix loop, watch CI, run an inline review council, then test in a target environment.
+Resume/finish an existing PR (GitHub) or MR (GitLab): verify it exists, load prior design/research context (from a bead or the PR/MR diff), run a grade-gated impl-fix loop, watch CI, run an inline review council, then test in a target environment.
+
+> **GitHub and GitLab.** finish-pr works with both. The `pr-author` agent detects the VCS host from `git remote get-url origin` at runtime: GitHub remotes use `gh` (`gh pr ...`), GitLab remotes use `glab` (`glab mr ...`) or fall back to the GitLab REST API with `$GITLAB_TOKEN` when `glab` is absent. Pass a GitHub PR URL, a GitLab MR URL (`https://<host>/group/.../project/-/merge_requests/N`), or a bare integer.
 
 ## Command
 
@@ -12,7 +14,7 @@ finish-pr pr=<url-or-number> [bead=<id>] [skipReview=true] [targetEnv=staging] [
 
 | Arg | Meaning | Default |
 |---|---|---|
-| `pr` | **Required.** Entry point. Must be an integer or a `https://github.com/owner/repo/pull/N` URL (validated by regex to close a `gh pr view` injection vector). | none — missing/invalid yields `needs_human` handoff |
+| `pr` | **Required.** Entry point. Must be an integer, a `https://github.com/owner/repo/pull/N` URL, or a `https://<gitlab-host>/group/.../project/-/merge_requests/N` URL (validated by regex to close a CLI injection vector). | none -- missing/invalid yields `needs_human` handoff |
 | `bead` | Load schema-validated prior `design.json` + `research.json` across the seam from this bead. If absent, context is derived from the PR diff instead. Also used to derive the run bead id. | none |
 | `skipReview` | `'true'`/`true` skips the entire review council; verdict is forced to `APPROVE`. | false |
 | `targetEnv` | Environment string injected into the Testing phase prompt. | `local` |
@@ -145,7 +147,7 @@ Declared in the file's `// @@USE:` header and inlined at build time:
 Budgets (from `PHASE_BUDGETS`): Impl 2 iterations, CI 3 watch cycles, council 3 rounds, Testing 2 iterations.
 
 `needs_human` is returned (after writing a handoff doc) when:
-- `pr=` is missing (`handoff:no-pr`) or not a valid integer/GitHub PR URL (`handoff:invalid-pr`).
+- `pr=` is missing (`handoff:no-pr`) or not a valid integer/GitHub PR URL/GitLab MR URL (`handoff:invalid-pr`).
 - Verify reports the PR does not exist (`handoff:verify-failed`).
 - bead-path load fails to produce a schema-valid design or research (`handoff:load-design-failed` / `handoff:load-research-failed`); diff-path fails to derive research (`handoff:diff-context-failed`).
 - Impl loop exhausts budget without an APPROVE grade (`handoff:impl`).

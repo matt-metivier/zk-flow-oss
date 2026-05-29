@@ -40,6 +40,38 @@ Open Claude Code in the `zk-flow` directory, then run a workflow:
 
 ---
 
+## Using zk-flow in other repos
+
+Slash commands (`/feature`, `/review`, etc.) only resolve inside the directory where `.claude/commands/` lives. After running `npm run build`, pick one of three install options:
+
+**(a) Global install** -- commands available in every repo:
+
+```bash
+cp -r .claude/commands   ~/.claude/commands
+cp -r .claude/workflows  ~/.claude/workflows
+cp -r .claude/agents     ~/.claude/agents
+```
+
+Set `$ZK_ARTIFACTS_DIR` in your shell profile as before. The built `.claude/workflows/*.js` files must be present (run `npm run build` first). Tradeoff: one shared version -- all repos get the same copy until you re-copy.
+
+**(b) Per-repo copy** -- isolated, independently upgradeable:
+
+```bash
+cp -r /path/to/zk-flow/.claude /your/repo/.claude
+```
+
+Re-copy whenever you pull updates from zk-flow. Tradeoff: multiple copies to keep in sync.
+
+**(c) Symlink** -- single source of truth, always current:
+
+```bash
+ln -s /path/to/zk-flow/.claude /your/repo/.claude
+```
+
+Any `npm run build` in zk-flow immediately applies everywhere the symlink is used. Tradeoff: all symlinked repos move together on every update.
+
+---
+
 ## How it works
 
 zk-flow is organized in five layers: **workflows** (orchestration -- phase order, gate

@@ -1,5 +1,5 @@
 // src/fragments/depth-map.js
-// Review depth thresholds and perspective sets.
+// Review depth criteria + perspective defaults.
 // "Evaluate only the criteria for your depth and all shallower depths."
 export const REVIEW_DEPTHS = {
   none: [],
