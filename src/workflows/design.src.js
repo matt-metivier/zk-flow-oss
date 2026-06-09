@@ -1,5 +1,5 @@
 // src/workflows/design.src.js
-// @@USE: run-phase,handoff,depth-map,verdict,budgets,schemas,args,bd-memory,bead-run,model-tiers,env-check,guardrails,skill-render,persona-load
+// @@USE: run-phase,handoff,depth-map,verdict,budgets,schemas,args,bd-memory,bead-run,model-tiers,env-check,guardrails,skill-render,persona-load,prompt-loader
 export const meta = {
   name: 'design',
   description: 'Discover + research + design panel with handoff boundary to feature impl',
@@ -30,7 +30,7 @@ const beadId = runBeadId(a);
 // --- RESEARCH ---
 phase('Research');
 const research = await runPhase({
-  phasePrompt: (i, fb) => `Research iteration ${i}: gather context, prior art, and constraints for the requested design. ${fb ? 'Address prior grader feedback: ' + fb : ''} Request: ${a._ ? a._.join(' ') : ''}`,
+  phasePrompt: (i, fb) => loadPhasePrompt('research', { iteration: i, feedback: fb || null, request: (a._ ? a._.join(' ') : '') }),
   phaseSchema: SCHEMAS.research,
   agentType: 'researcher',
   label: 'research',
@@ -104,6 +104,7 @@ const discovery = await agent(
   { schema: SCHEMAS.discover, agentType: 'researcher', label: 'discover:1', model: modelFor('discover', a) }
 );
 await persistPhase(beadId, 'Discover', discovery);
+assertDiscoverValid(discovery, 'Discover');
 
 // --- HANDOFF ---
 phase('Handoff');

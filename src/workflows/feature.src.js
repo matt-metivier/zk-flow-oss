@@ -76,6 +76,7 @@ if (startAt === 'discover') {
     { schema: SCHEMAS.discover, agentType: 'researcher', label: 'discover:1', model: modelFor('discover', a) }
   );
   await persistPhase(beadId, 'Discover', discovery);
+  assertDiscoverValid(discovery, 'Discover');
   const skillsBlock = await renderSkills(discovery.selected_skills, modelFor('discover', a));
 
   // --- DESIGN (perspectives inside the loop so each revision is re-reviewed) ---

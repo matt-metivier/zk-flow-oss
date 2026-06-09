@@ -1,4 +1,4 @@
-// @@USE: run-phase,handoff,budgets,schemas,args,bd-memory,bead-run,model-tiers,env-check
+// @@USE: run-phase,handoff,budgets,schemas,args,bd-memory,bead-run,model-tiers,env-check,prompt-loader
 export const meta = {
   name: 'debug',
   description: 'Debug lifecycle: reproduce+root-cause -> fix -> test. Diagnoses a reported bug to ROOT CAUSE, then fixes it. Tighter than bugfix: starts from a symptom.',
@@ -22,7 +22,7 @@ const beadId = runBeadId(a);
 phase('Reproduce');
 phase('RootCause');
 const rootCause = await runPhase({
-  phasePrompt: (i, fb) => `Reproduce+RootCause iteration ${i}: reproduce the reported symptom: ${a.brief || (a._ ? a._.join(' ') : '(infer from context)')}. ${fb ? 'Address prior grader feedback: ' + fb : ''} Find the ROOT CAUSE (not just the surface symptom) with file:line evidence; trace the failing path via CGC/Octocode. The grader must reject if root cause is unproven (evidence_quality weak).`,
+  phasePrompt: (i, fb) => loadPhasePrompt('research', { iteration: i, feedback: fb || null, request: 'ROOT CAUSE: ' + (a.brief || (a._ ? a._.join(' ') : '(infer from context)')) }),
   phaseSchema: SCHEMAS.research,
   agentType: 'researcher',
   label: 'rootcause',
@@ -40,7 +40,7 @@ await persistPhase(beadId, 'RootCause', rootCause.out);
 // --- FIX ---
 phase('Fix');
 const fixResult = await runPhase({
-  phasePrompt: (i, fb) => `Fix iteration ${i}: fix the ROOT CAUSE (not the symptom). ${fb ? 'Address prior grader feedback: ' + fb : ''} Add a regression test that fails before / passes after. Root cause: ${JSON.stringify(rootCause.out)}. Symptom: ${a.brief || (a._ ? a._.join(' ') : '')}`,
+  phasePrompt: (i, fb) => loadPhasePrompt('implementation', { iteration: i, feedback: fb || null, request: (a.brief || (a._ ? a._.join(' ') : '')), research: rootCause.out }),
   phaseSchema: SCHEMAS.implementation,
   agentType: 'scope-locked-editor',
   label: 'fix',
@@ -58,7 +58,7 @@ await persistPhase(beadId, 'Fix', fixResult.out);
 // --- TEST ---
 phase('Test');
 const testResult = await runPhase({
-  phasePrompt: (i, fb) => `Test iteration ${i}: verify the symptom is gone and the regression test passes. ${fb ? 'Address prior grader feedback: ' + fb : ''} Run the full suite; confirm the regression test that was added fails before the fix and passes after. Fix: ${JSON.stringify(fixResult.out)}. Symptom: ${a.brief || (a._ ? a._.join(' ') : '')}`,
+  phasePrompt: (i, fb) => loadPhasePrompt('testing', { iteration: i, feedback: fb || null, request: (a.brief || (a._ ? a._.join(' ') : '')), design: fixResult.out }),
   phaseSchema: SCHEMAS.testing,
   agentType: 'test-runner',
   label: 'testing',

@@ -1,5 +1,5 @@
 // src/workflows/bugfix.src.js
-// @@USE: run-phase,handoff,verdict,budgets,schemas,args,bd-memory,bead-run,ci-loop,model-tiers,env-check,guardrails,skill-render,persona-load
+// @@USE: run-phase,handoff,verdict,budgets,schemas,args,bd-memory,bead-run,ci-loop,model-tiers,env-check,guardrails,skill-render,persona-load,prompt-loader
 export const meta = {
   name: 'bugfix',
   description: 'Bug fix lifecycle: discover->research->impl->ci->testing. Mirrors feature minus design and review phases.',
@@ -30,7 +30,7 @@ const beadId = runBeadId(a);
 // --- RESEARCH ---
 phase('Research');
 const research = await runPhase({
-  phasePrompt: (i, fb) => `Research iteration ${i}: understand the root cause, reproduction steps, and fix approaches. ${fb ? 'Address prior grader feedback: ' + fb : ''} Bug: ${a._ ? a._.join(' ') : ''}`,
+  phasePrompt: (i, fb) => loadPhasePrompt('research', { iteration: i, feedback: fb || null, request: (a._ ? a._.join(' ') : ''), discovery: discovery }),
   phaseSchema: SCHEMAS.research,
   agentType: 'researcher',
   label: 'research',
@@ -54,11 +54,12 @@ const discovery = await agent(
   { schema: SCHEMAS.discover, agentType: 'researcher', label: 'discover:1', model: modelFor('discover', a) }
 );
 await persistPhase(beadId, 'Discover', discovery);
+assertDiscoverValid(discovery, 'Discover');
 
 // --- IMPL ---
 phase('Impl');
 let implResult = await runPhase({
-  phasePrompt: (i, fb) => `Implementation iteration ${i}: write the fix. ${fb ? 'Address prior grader feedback: ' + fb : ''} Research: ${JSON.stringify(research.out)}. Discovery: ${JSON.stringify(discovery)}. Bug: ${a._ ? a._.join(' ') : ''}`,
+  phasePrompt: (i, fb) => loadPhasePrompt('implementation', { iteration: i, feedback: fb || null, request: (a._ ? a._.join(' ') : ''), research: research.out, design: discovery, skills: skillsBlock }),
   phaseSchema: SCHEMAS.implementation,
   agentType: 'scope-locked-editor',
   label: 'impl',
@@ -81,7 +82,7 @@ if (!ciResult.passed) return { verdict: 'needs_human', phase: ciResult.phase };
 // --- TESTING ---
 phase('Testing');
 const testing = await runPhase({
-  phasePrompt: (i, fb) => `Testing iteration ${i}: verify the bug is fixed. Run regression tests. ${fb ? 'Address prior grader feedback: ' + fb : ''} Impl: ${JSON.stringify(implResult.out)}. Discovery: ${JSON.stringify(discovery)}.`,
+  phasePrompt: (i, fb) => loadPhasePrompt('testing', { iteration: i, feedback: fb || null, request: (a._ ? a._.join(' ') : ''), design: implResult.out, research: research.out }),
   phaseSchema: SCHEMAS.testing,
   agentType: 'test-runner',
   label: 'testing',
