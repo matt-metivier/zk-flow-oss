@@ -157,9 +157,11 @@ implResult = await runPhase({
   phaseSchema: SCHEMAS.implementation,
   agentType: 'scope-locked-editor',
   label: 'impl',
+  phaseName: 'implementation',
   maxIterations: PHASE_BUDGETS.impl,
   model: modelFor('impl', a), gradeModel: modelFor('grade', a),
   posture: postureFor('impl', a),
+  beadId: beadId,
   gradePrompt: (out) => `Grade this PR implementation fix for correctness, scope adherence to the PR's stated intent, and alignment with reviewer feedback. PR: ${pr}. Output: ${JSON.stringify(out)}`,
 });
 if (!implResult.ok) {
@@ -225,10 +227,12 @@ for (let ri = 1; ri <= PHASE_BUDGETS.council; ri++) {
       phaseSchema: SCHEMAS.implementation,
       agentType: 'scope-locked-editor',
       label: `impl:review-fix:${ri}`,
+      phaseName: 'implementation',
       maxIterations: 1,
       model: modelFor('impl', a), gradeModel: modelFor('grade', a),
       posture: postureFor('impl', a),
-      gradePrompt: (out) => `Grade this review-fix implementation. Output: ${JSON.stringify(out)}`,
+      beadId: beadId,
+  gradePrompt: (out) => `Grade this review-fix implementation. Output: ${JSON.stringify(out)}`,
     });
     if (!implResult.ok) {
       await agent(handoffPrompt('review-fix impl failed within budget', 'investigate review findings manually'), { agentType: 'pr-author', label: 'handoff:review-fix', model: modelFor('persist', a) });
@@ -258,6 +262,7 @@ const testing = await runPhase({
   maxIterations: PHASE_BUDGETS.testing,
   model: modelFor('testing', a), gradeModel: modelFor('grade', a),
   posture: postureFor('testing', a),
+  beadId: beadId,
   gradePrompt: (out) => `Grade this testing output for coverage, evidence that the PR's changes work correctly, and absence of regressions. Output: ${JSON.stringify(out)}`,
 });
 if (!testing.ok) {

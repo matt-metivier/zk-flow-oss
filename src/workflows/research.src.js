@@ -1,5 +1,5 @@
 // src/workflows/research.src.js
-// @@USE: run-phase,handoff,budgets,schemas,args,bd-memory,bead-run,model-tiers,env-check,guardrails,skill-render,persona-load,prompt-loader
+// @@USE: run-phase,handoff,budgets,schemas,args,bead-run,model-tiers,env-check,guardrails,skill-render,persona-load,prompt-loader
 export const meta = {
   name: 'research',
   description: 'Investigate and STOP: discover -> research. No design or implementation. Use when you need a research synthesis before committing to a solution.',
@@ -37,6 +37,7 @@ const research = await runPhase({
   maxIterations: PHASE_BUDGETS.research,
   model: modelFor('research', a), gradeModel: modelFor('grade', a),
   posture: postureFor('research', a),
+  beadId: beadId,
   gradePrompt: (out) => `Grade this research against the research rubric: ${JSON.stringify(out)}`,
 });
 if (!research.ok) {
@@ -47,6 +48,7 @@ if (!research.ok) {
 // Persist synthesis to beads
 await persistPhase(beadId, 'ResearchSynthesis', research.out);
 assertEvidencePresent(research.out, 'Research');
+  assertEvidenceQuality(research.out, 'Research');
   const skillsBlock = await renderSkills(discovery.selected_skills, modelFor('research', a));
 
 // Final handoff doc
@@ -56,7 +58,7 @@ return { verdict: 'research_complete', synthesis: research.out, bead: beadId };
 // --- DISCOVER ---
 phase('Discover');
 const discovery = await agent(
-  `${postureFor('discover', a)}\n\n${buildPersonaSection()}\n\nSelect skills, vault paths, and related beads using research findings and persona context.\nResearch summary: ${JSON.stringify({key_findings: research.out.key_findings, synthesis: research.out.synthesis})}\nRequest(infer from context)'}`,
+  `${postureFor('discover', a)}\n\n${buildPersonaSection()}\n\nSelect skills, vault paths, and related beads using research findings and persona context.\nResearch summary: ${JSON.stringify({key_findings: research.out.key_findings, synthesis: research.out.synthesis})}\nRequest: ${a._ ? a._.join(' ') : '(infer from context)'}`,
   { schema: SCHEMAS.discover, agentType: 'researcher', label: 'discover:1', model: modelFor('discover', a) }
 );
 await persistPhase(beadId, 'Discover', discovery);

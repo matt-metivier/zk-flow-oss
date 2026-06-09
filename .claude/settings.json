@@ -4,12 +4,20 @@
       {
         "hooks": [{"command": "cgc index 2>/dev/null || true","if": "Bash(git commit*)","type": "command"}],
         "matcher": "Bash"
+      },
+      {
+        "hooks": [{"command": "cgc index 2>/dev/null || true","type": "command"}],
+        "matcher": "Edit|Write"
       }
     ],
     "PreToolUse": [
       {
         "hooks": [{"prompt": "If target is source code, prefer MCP: Octocode LSP for definition/references, CodeGraphContext for callers/blast-radius, Repomix for directory overviews.","type": "prompt"}],
         "matcher": "Read|Grep|Glob"
+      },
+      {
+        "hooks": [{"prompt": "If the Read request targets a directory overview question, use Repomix MCP. For single-file reads, allow normally.","type": "prompt"}],
+        "matcher": "Read"
       }
     ]
   }

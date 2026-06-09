@@ -87,4 +87,8 @@ After mapping: update your research scope to the smallest vertical slice that de
 
 ## Output
 
+
+**Required schema fields** (`schemas/research.json`):
+`outcome (="research_complete")`, `task_context`, `key_findings[]`, `evidence[]`, `evidence_quality`, `synthesis`, `selected_skills[]`, `vault_solutions_consulted[]`
+
 Emit JSON matching `schemas/research.json` as final message. Also write `$TMPDIR/research.md`.

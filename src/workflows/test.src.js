@@ -1,5 +1,5 @@
 // src/workflows/test.src.js
-// @@USE: run-phase,handoff,budgets,schemas,args,bd-memory,bead-run,model-tiers,env-check
+// @@USE: run-phase,handoff,budgets,schemas,args,bead-run,model-tiers,env-check
 export const meta = {
   name: 'test',
   description: 'Standalone test strategy workflow: test-research -> test-design -> run. Use against an existing feature or PR to produce and execute a concrete test plan.',
@@ -27,8 +27,11 @@ const testResearch = await runPhase({
   phaseSchema: SCHEMAS.research,
   agentType: 'researcher',
   label: 'test-research',
+  phaseName: 'research',
   maxIterations: PHASE_BUDGETS.research,
   posture: postureFor('research', a),
+  beadId: beadId,
+  gradeModel: modelFor('grade', a),
   gradePrompt: (out) => `Grade this test research for scenario coverage, fixture completeness, and env constraint accuracy: ${JSON.stringify(out)}`,
 });
 if (!testResearch.ok) {
@@ -44,8 +47,11 @@ const testDesign = await runPhase({
   phaseSchema: SCHEMAS.design,
   agentType: 'designer',
   label: 'test-design',
+  phaseName: 'design',
   maxIterations: PHASE_BUDGETS.design,
   posture: postureFor('design', a),
+  beadId: beadId,
+  gradeModel: modelFor('grade', a),
   gradePrompt: (out) => `Grade this test plan for concreteness, coverage breadth, and executability in ${targetEnv}: ${JSON.stringify(out)}`,
 });
 if (!testDesign.ok) {
@@ -61,8 +67,11 @@ const run = await runPhase({
   phaseSchema: SCHEMAS.testing,
   agentType: 'test-runner',
   label: 'run',
+  phaseName: 'testing',
   maxIterations: PHASE_BUDGETS.testing,
   posture: postureFor('testing', a),
+  beadId: beadId,
+  gradeModel: modelFor('grade', a),
   gradePrompt: (out) => `Grade this test execution against the testing rubric for coverage, evidence quality, and pass/fail clarity: ${JSON.stringify(out)}`,
 });
 if (!run.ok) {

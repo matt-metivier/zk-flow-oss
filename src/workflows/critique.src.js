@@ -1,5 +1,5 @@
 // src/workflows/critique.src.js
-// @@USE: depth-map,verdict,budgets,schemas,args,model-tiers
+// @@USE: depth-map,verdict,budgets,schemas,args,model-tiers,bd-memory,bead-run
 export const meta = { name: 'critique', description: 'Design with adversarial pass + review council', phases: [{title:'Draft'},{title:'Adversarial'},{title:'Council'}] };
 // @@FRAGMENTS@@
 
@@ -54,4 +54,8 @@ for (let di = 1; di <= PHASE_BUDGETS.design; di++) {
   }
 }
 
+const _critiqueBeadId = runBeadId(a);
+if (_critiqueBeadId) {
+  await agent(`Persist GraderFeedback. Run EXACTLY this shell:\n\`\`\`\n${bdWrite(_critiqueBeadId, 'GraderFeedback', { phase: 'critique', verdict: grade && grade.verdict, findings: (grade && (grade.findings || grade.challenges || []) || []).slice(0, 5) })}\n\`\`\``, { label: 'persist:graderfeedback:critique', agentType: 'researcher', model: MODEL_TIERS.fast });
+}
 return { design, verdict: grade ? grade.verdict : 'BLOCK', route: routeVerdict(grade ? grade.verdict : 'BLOCK'), gradeOk };

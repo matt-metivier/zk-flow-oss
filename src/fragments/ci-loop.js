@@ -36,6 +36,8 @@ export async function runCI({ beadId, budget, agentType, pr, getImplResult, setI
         agentType: 'scope-locked-editor',
         label: `impl:ci-fix:${ci}`,
         maxIterations: 1,
+        beadId: beadId,
+        phaseName: 'implementation',
         gradePrompt: (out) => `Grade this CI-fix implementation. Output: ${JSON.stringify(out)}`,
       });
       if (implRerunGuard && !implResult.ok) {

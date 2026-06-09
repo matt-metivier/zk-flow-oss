@@ -8,7 +8,7 @@ const stripExports = (src) => src.replace(/^export\s+/gm, '');
 
 // Special-case: schemas fragment is emitted as an inlined literal (workflows can't import JSON).
 function schemasLiteral() {
-  const names = ['research','design','implementation','review','testing','discover','proposal'];
+  const names = ['research','design','implementation','review','testing','discover','investigate'];
   const obj = Object.fromEntries(names.map(n =>
     [n, JSON.parse(readFileSync(join(ROOT, 'schemas', `${n}.json`), 'utf8'))]));
   return `const SCHEMAS = ${JSON.stringify(obj)};`;
@@ -17,7 +17,7 @@ function schemasLiteral() {
 // Phase prompts fragment — inlines prompts/phases/*.md as string constants.
 // Fails build if a required phase prompt is missing (fail-fast at build time).
 function phasePromptsLiteral() {
-  const phases = ['research','design','implementation','testing','discover','self-improvement','ci','review'];
+  const phases = ['research','design','implementation','testing','discover','self-improvement','ci','review','investigate'];
   const obj = {};
   for (const p of phases) {
     const fpath = join(ROOT, 'prompts', 'phases', `${p}.md`);
@@ -32,7 +32,7 @@ function phasePromptsLiteral() {
 
 // Rubric existence check — fails build if any rubric file is missing.
 function assertRubricsExist() {
-  const rubrics = ['research','design','implementation','review','testing','proposal','discover'];
+  const rubrics = ['research','design','implementation','review','testing','proposal','discover','investigate','refactor','self-improvement'];
   for (const r of rubrics) {
     const fpath = join(ROOT, 'prompts', 'rubrics', `${r}-rubric.md`);
     try { readFileSync(fpath, 'utf8'); } catch (e) {

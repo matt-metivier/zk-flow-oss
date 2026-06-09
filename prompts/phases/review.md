@@ -75,4 +75,8 @@ Arbiter runs after all perspectives complete. Deduplicates findings (same file:l
 
 ## Output
 
+
+**Required schema fields** (`schemas/review.json` for perspectives / `schemas/investigate.json` for CI):
+`verdict` (APPROVE|REQUEST_CHANGES|BLOCK), `evidence_quality`, `weighted_score` (0.0-1.0), `findings[]` (each: title, severity P0-P3, file, line, why_it_matters, autofix_class, owner, evidence[]), `perspectives_run[]`
+
 Each perspective: JSON matching `schemas/review.json`. Arbiter: same schema with `perspectives_run[]` populated.

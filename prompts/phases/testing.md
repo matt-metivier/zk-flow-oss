@@ -28,4 +28,8 @@ Design and run a test strategy that exercises the feature in a realistic environ
 
 ## Output
 
+
+**Required schema fields** (`schemas/testing.json`):
+`outcome`, `smoke_command`, `smoke_exit_code`, `scenarios_exercised[]`, `regression_tests_added`
+
 Emit JSON matching `schemas/testing.json` as final message.

@@ -1,5 +1,5 @@
 // src/workflows/review.src.js
-// @@USE: depth-map,verdict,budgets,schemas,args,model-tiers
+// @@USE: depth-map,verdict,schemas,args,model-tiers,bd-memory,bead-run
 export const meta = {
   name: 'review',
   description: 'Multi-perspective code review with depth modes (none/light/standard/full)',
@@ -27,4 +27,9 @@ const synthesis = await agent(
   { label: 'arbiter', phase: 'Synthesis', agentType: 'arbiter', schema: SCHEMAS.review, model: modelFor('grade', a) });
 
 const sv = (synthesis && synthesis.verdict) || 'BLOCK';
+// Persist GraderFeedback for /improve signal
+const reviewBeadId = runBeadId(a);
+if (reviewBeadId) {
+  await agent(`Persist GraderFeedback. Run EXACTLY this shell, then report done:\n\`\`\`\n${bdWrite(reviewBeadId, 'GraderFeedback', { phase: 'review', verdict: synthesis && synthesis.verdict, findings: (synthesis && synthesis.findings || []).slice(0, 5), depth })}\n\`\`\``, { label: 'persist:graderfeedback:review', agentType: 'researcher', model: MODEL_TIERS.fast });
+}
 return { verdict: sv, route: routeVerdict(sv), depth, perspectives, findings: synthesis };

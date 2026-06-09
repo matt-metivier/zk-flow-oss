@@ -1,4 +1,4 @@
-// @@USE: run-phase,handoff,budgets,schemas,args,bd-memory,bead-run,model-tiers,env-check,guardrails,prompt-loader
+// @@USE: run-phase,handoff,budgets,schemas,args,bead-run,model-tiers,env-check,guardrails,prompt-loader
 export const meta = {
   name: 'refactor',
   description: 'Refactor lifecycle: discover -> research -> refactor -> test. Restructures code WITHOUT behavior change.',
@@ -44,6 +44,7 @@ const research = await runPhase({
   maxIterations: PHASE_BUDGETS.research,
   model: modelFor('research', a), gradeModel: modelFor('grade', a),
   posture: postureFor('research', a),
+  beadId: beadId,
   gradePrompt: (out) => `Grade this research output for completeness, blast-radius coverage, and call-site enumeration. Reject if any caller/callee is unaccounted for. Output: ${JSON.stringify(out)}`,
 });
 if (!research.ok) {
@@ -60,9 +61,11 @@ const refactorResult = await runPhase({
   phaseSchema: SCHEMAS.implementation,
   agentType: 'scope-locked-editor',
   label: 'refactor',
+  phaseName: 'implementation',
   maxIterations: PHASE_BUDGETS.impl,
   model: modelFor('impl', a), gradeModel: modelFor('grade', a),
   posture: postureFor('impl', a),
+  beadId: beadId,
   gradePrompt: (out) => `Grade this refactor against the implementation rubric AND behavior-preservation: verify all call sites from research are updated, no public contracts changed, no behavior altered. Output: ${JSON.stringify(out)}`,
 });
 if (!refactorResult.ok) {
@@ -82,6 +85,7 @@ const testResult = await runPhase({
   maxIterations: PHASE_BUDGETS.testing,
   model: modelFor('testing', a), gradeModel: modelFor('grade', a),
   posture: postureFor('testing', a),
+  beadId: beadId,
   gradePrompt: (out) => `Grade this test run: confirm the suite passes and no test changed semantics. Output: ${JSON.stringify(out)}`,
 });
 if (!testResult.ok) {
