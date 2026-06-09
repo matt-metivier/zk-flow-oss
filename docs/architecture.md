@@ -102,7 +102,7 @@ resolved by `modelFor(phase, a)`.
 |------|----------|-----|
 | `fast` | `claude-haiku-4-5-20251001` | ci-watch, persist/handoff, simple echoes |
 | `mid` | `claude-sonnet-4-6` | discover, research, review perspectives, testing |
-| `deep` | `claude-sonnet-4-6` | design, synthesis (arbiter/grader) |
+| `deep` | `claude-opus-4-8` | design, synthesis (arbiter/grader) |
 
 **Default tier per phase (`PHASE_TIER`):**
 | Phase | Tier | Rationale |

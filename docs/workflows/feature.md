@@ -1,6 +1,6 @@
 # feature
 
-Full feature lifecycle (discover -> research -> design -> impl -> ci -> review -> testing), split across two runs at a human-approval handoff boundary.
+Full feature lifecycle (research -> discover -> design -> impl -> ci -> review -> testing), split across two runs at a human-approval handoff boundary.
 
 ## Command
 
@@ -18,7 +18,7 @@ Args actually read by `feature.src.js` (parsed by the `args` fragment; positiona
 | Arg | Meaning | Default |
 |-----|---------|---------|
 | `_` (positional) | The feature request text, joined into the prompt for every phase. | inferred from context |
-| `startAt` | Entry point. Only `discover` or `impl` are valid; anything else escalates `needs_human`. `discover` = run-1 (discover->research->design->handoff). `impl` = run-2 (load->impl->ci->review->testing). | `discover` |
+| `startAt` | Entry point. Only `discover` or `impl` are valid; anything else escalates `needs_human`. `discover` = run-1 (research->discover->design->handoff). `impl` = run-2 (load->impl->ci->review->testing). | `discover` |
 | `bead` | Stable per-run bead id correlating the run-1/run-2 seam. REQUIRED for `startAt=impl` (loads prior design+research). Normalized to lowercase/`[a-z0-9._-]`; invalid format escalates `needs_human`. | derived via `runBeadId` (`zkflow-<slug>`) |
 | `brief` | Extra brief text appended to research/design/impl/testing prompts. | empty |
 | `targetEnv` | Environment the testing phase verifies against (`local`/`dev`/`stage`/`prod`). | `local` |
