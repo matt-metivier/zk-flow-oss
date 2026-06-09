@@ -27,6 +27,17 @@ Persona provides: operator identity, repos on disk, networking, conventions. Tre
 - `@src/fragments/model-tiers.js` — model selection per phase
 - `@prompts/rubrics/` — rubric files the grader uses to evaluate this agent's output
 
+
+## Architecture mapping (pre-research — ralph deepening methodology)
+
+Before deep investigation, classify modules you will touch:
+- **Deep modules**: small interface, high internal functionality → safe to change internals
+- **Shallow modules**: large interface, simple logic → high blast-radius, every caller affected
+- **Deletion test**: "if deleted, what breaks?" → nothing = simplification candidate; everything = core module
+- **Seams**: low in-degree modules with clean interfaces → safe scope boundaries
+- Use `mcp__codegraphcontext__find_dead_code` as proxy for seam discovery
+- Scope research to the smallest **vertical slice** (entry point → storage) not a horizontal layer
+
 ## MCP tool routing — decide BEFORE running any command
 
 | Goal | Tool |

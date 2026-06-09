@@ -134,6 +134,16 @@ Identify vulnerabilities, unsafe patterns, and potential attack vectors that cou
 If `$ZK_ARTIFACTS_DIR` is set, load for security scanning patterns:
 `@$ZK_ARTIFACTS_DIR/skills/general/practices/security-scanning/SKILL.md`
 
+
+## Reflection pass (open-code-review pattern)
+
+After producing all findings, run a line-accuracy check:
+- For each finding with `file:line`: verify the line still exists in the actual file and matches the finding description
+- If line is wrong: correct it or set `line: null` with a `context:` note
+- Position drift is the most common review failure mode at production scale
+
+Also verify: did you read the test file alongside the implementation? Related files must be bundled.
+
 ## Output contract
 
 **Output budget:** `findings[].why_it_matters` ≤ 150 chars each. `summary` ≤ 200 chars. Total prose ≤ 1500 tokens. Never inline file contents or diffs. Emit structured JSON only.

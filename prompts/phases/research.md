@@ -6,6 +6,51 @@
 
 Investigate the task. Produce evidence-grounded synthesis the designer can act on. Read-only — no code changes.
 
+
+## Architecture mapping (pre-research — run first)
+
+Before diving into specifics, map the codebase structure. This makes subsequent research targeted, not exhaustive.
+
+### Module depth classification (from ralph/Matt Pocock deepening methodology)
+
+For each module you'll touch, classify:
+
+| Class | Definition | What to do |
+|---|---|---|
+| **Deep** | High functionality-to-interface ratio — small surface, lots of internal work | Safe to change internals; focus research on callers of the interface |
+| **Shallow** | Large interface, little functionality — complex API for simple logic | Flag as coupling risk; every caller is affected by changes |
+
+### Deletion test
+
+For each module in scope: "If I deleted this, what breaks?"
+- Nothing important breaks → candidate for deletion/simplification
+- Everything breaks → core module, high blast-radius, research must cover all callers
+- Some things break → seam exists here
+
+### Seam identification
+
+A seam is a safe division point — where the codebase can be cleanly split.
+Use CodeGraphContext to find modules with low incoming-edge count AND clear interface boundaries.
+Seams tell you where a change can be bounded safely.
+
+### Vertical-slice scope
+
+Define your research scope as a vertical slice: from user-facing entry point → through each layer → to storage.
+Avoids horizontal slices (e.g. "all the models") which create incomplete, unshippable changes.
+
+```bash
+# Map entry points
+mcp__octocode__localGetDefinition for main() / handler / route / cmd
+
+# Map layers via CGC
+mcp__codegraphcontext__analyze_code_relationships for depth-limited traversal
+
+# Identify seams (low in-degree modules)
+mcp__codegraphcontext__find_dead_code  # good proxy for seam boundaries
+```
+
+After mapping: update your research scope to the smallest vertical slice that delivers the feature.
+
 ## Protocol
 
 1. **Load context** — use skills rendered in your prompt (`## Selected Skills` sections). Use vault paths from discovery. Check related beads.
