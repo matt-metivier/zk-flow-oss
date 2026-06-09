@@ -1,5 +1,5 @@
 // src/workflows/research.src.js
-// @@USE: run-phase,handoff,budgets,schemas,args,bd-memory,bead-run,model-tiers,env-check,guardrails,skill-render,persona-load
+// @@USE: run-phase,handoff,budgets,schemas,args,bd-memory,bead-run,model-tiers,env-check,guardrails,skill-render,persona-load,prompt-loader
 export const meta = {
   name: 'research',
   description: 'Investigate and STOP: discover -> research. No design or implementation. Use when you need a research synthesis before committing to a solution.',
@@ -30,7 +30,7 @@ const beadId = runBeadId(a);
 // --- RESEARCH ---
 phase('Research');
 const research = await runPhase({
-  phasePrompt: (i, fb) => `Research iteration ${i}: investigate the topic thoroughly. Identify key findings, evidence, unknowns, and recommended next steps. ${fb ? 'Address prior grader feedback: ' + fb : ''} Topic: ${a._ ? a._.join(' ') : ''}`,
+  phasePrompt: (i, fb) => loadPhasePrompt('research', { iteration: i, feedback: fb || null, request: (a._ ? a._.join(' ') : ''), discovery: discovery }),
   phaseSchema: SCHEMAS.research,
   agentType: 'researcher',
   label: 'research',
@@ -60,4 +60,5 @@ const discovery = await agent(
   { schema: SCHEMAS.discover, agentType: 'researcher', label: 'discover:1', model: modelFor('discover', a) }
 );
 await persistPhase(beadId, 'Discover', discovery);
+assertDiscoverValid(discovery, 'Discover');
 

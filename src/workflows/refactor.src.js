@@ -1,4 +1,4 @@
-// @@USE: run-phase,handoff,budgets,schemas,args,bd-memory,bead-run,model-tiers,env-check,guardrails
+// @@USE: run-phase,handoff,budgets,schemas,args,bd-memory,bead-run,model-tiers,env-check,guardrails,prompt-loader
 export const meta = {
   name: 'refactor',
   description: 'Refactor lifecycle: discover -> research -> refactor -> test. Restructures code WITHOUT behavior change.',
@@ -37,7 +37,7 @@ await persistPhase(beadId, 'Discover', discovery);
 // --- RESEARCH ---
 phase('Research');
 const research = await runPhase({
-  phasePrompt: (i, fb) => `Research iteration ${i}: map the blast radius of the refactor. ${fb ? 'Address prior grader feedback: ' + fb : ''} Use CodeGraphContext to find ALL callers/callees of the symbols to change; enumerate every call site; identify behavior-preserving boundaries. Discovery: ${JSON.stringify(discovery)}. Refactor target: ${a._ ? a._.join(' ') : ''}`,
+  phasePrompt: (i, fb) => loadPhasePrompt('research', { iteration: i, feedback: fb || null, request: 'REFACTOR blast-radius mapping: ' + (a._ ? a._.join(' ') : ''), discovery: discovery }),
   phaseSchema: SCHEMAS.research,
   agentType: 'researcher',
   label: 'research',
@@ -56,7 +56,7 @@ assertEvidencePresent(research.out, 'Research');
 // --- REFACTOR ---
 phase('Refactor');
 const refactorResult = await runPhase({
-  phasePrompt: (i, fb) => `Refactor iteration ${i}: apply the refactor preserving behavior exactly. ${fb ? 'Address prior grader feedback: ' + fb : ''} Run CGC blast-radius before editing each symbol. Do NOT change public behavior/contracts; only structure. Update all call sites found in research. Research: ${JSON.stringify(research.out)}. Discovery: ${JSON.stringify(discovery)}. Refactor target: ${a._ ? a._.join(' ') : ''}`,
+  phasePrompt: (i, fb) => loadPhasePrompt('implementation', { iteration: i, feedback: fb || null, request: (a._ ? a._.join(' ') : ''), research: research.out, design: discovery, skills: skillsBlock || '' }),
   phaseSchema: SCHEMAS.implementation,
   agentType: 'scope-locked-editor',
   label: 'refactor',
@@ -75,7 +75,7 @@ await persistPhase(beadId, 'Refactor', refactorResult.out);
 phase('Test');
 const targetEnv = a.targetEnv || 'local';
 const testResult = await runPhase({
-  phasePrompt: (i, fb) => `Test iteration ${i}: verify behavior is UNCHANGED after the refactor. ${fb ? 'Address prior grader feedback: ' + fb : ''} Run the existing test suite; confirm no test changed meaning; targetEnv=${targetEnv}. Refactor: ${JSON.stringify(refactorResult.out)}. Discovery: ${JSON.stringify(discovery)}.`,
+  phasePrompt: (i, fb) => loadPhasePrompt('testing', { iteration: i, feedback: fb || null, request: 'verify UNCHANGED behavior after refactor', design: refactorResult.out, research: research.out }),
   phaseSchema: SCHEMAS.testing,
   agentType: 'test-runner',
   label: 'testing',

@@ -17,7 +17,7 @@ function schemasLiteral() {
 // Phase prompts fragment — inlines prompts/phases/*.md as string constants.
 // Fails build if a required phase prompt is missing (fail-fast at build time).
 function phasePromptsLiteral() {
-  const phases = ['research','design','implementation','testing','discover','self-improvement'];
+  const phases = ['research','design','implementation','testing','discover','self-improvement','ci','review'];
   const obj = {};
   for (const p of phases) {
     const fpath = join(ROOT, 'prompts', 'phases', `${p}.md`);

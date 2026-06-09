@@ -53,3 +53,20 @@ export async function guardedPhase(phaseName, output, ...assertFns) {
   for (const fn of assertFns) fn();
   return output;
 }
+
+export function assertDiscoverValid(discovery, phaseName) {
+  if (!discovery || typeof discovery !== 'object') {
+    throw new Error(`[guardrail:${phaseName}] Discover output null/undefined.`);
+  }
+  const skills = discovery.selected_skills || discovery.skills || [];
+  const vault = discovery.vault_paths || [];
+  if (skills.length === 0 && vault.length === 0) {
+    // Soft warning — some tasks genuinely have no domain skills
+    console.warn(`[guardrail:${phaseName}] Discover: no selected_skills and no vault_paths. ` +
+      'Verify Map of Contents was checked and skills glob returned results.');
+  }
+  if (!discovery.rationale && !discovery.reason) {
+    throw new Error(`[guardrail:${phaseName}] Discover output missing rationale. ` +
+      'Agent must explain why skills/vault paths were selected (or why none matched).');
+  }
+}
