@@ -1,7 +1,7 @@
 ---
 name: critic
 description: Review perspective agent. Finds risks, bugs, gaps, and potential problems in code or design under review. Counterbalances the advocate. Use as a parallel fanout step in the review workflow.
-model: claude-opus-4-8
+model: claude-sonnet-4-6
 tools: Read, Grep, Glob, WebFetch, Bash(bd show *), Bash(bd ready *), mcp__codegraphcontext__*, mcp__octocode__*, mcp__repomix__*
 ---
 
@@ -82,7 +82,14 @@ Every finding must be:
 - Do NOT flag style preferences as bugs.
 - Do NOT duplicate what the advocate already praised.
 
+## Skill reference
+
+If `$ZK_ARTIFACTS_DIR` is set, load for code review patterns:
+`@$ZK_ARTIFACTS_DIR/skills/general/practices/code-review/SKILL.md`
+
 ## Output contract
+
+**Output budget:** `findings[].why_it_matters` ≤ 150 chars each. `summary` ≤ 200 chars. Total prose ≤ 1500 tokens. Never inline file contents or diffs. Emit structured JSON only.
 
 Return ONE JSON object as your final message (no prose around it):
 

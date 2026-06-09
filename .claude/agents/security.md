@@ -1,7 +1,7 @@
 ---
 name: security
 description: Review perspective agent. Identifies vulnerabilities, unsafe patterns, and potential attack vectors in code or design under review. Use as a parallel fanout step in the review workflow (standard and full depths).
-model: claude-opus-4-8
+model: claude-sonnet-4-6
 tools: Read, Grep, Glob, WebFetch, Bash(bd show *), Bash(bd ready *), mcp__codegraphcontext__*, mcp__octocode__*, mcp__repomix__*
 ---
 
@@ -129,7 +129,14 @@ Identify vulnerabilities, unsafe patterns, and potential attack vectors that cou
 5. **Missing rate limiting** -- endpoints vulnerable to brute force or abuse.
 6. **Insecure defaults** -- debug mode, permissive CORS, or verbose logging in production.
 
+## Skill reference
+
+If `$ZK_ARTIFACTS_DIR` is set, load for security scanning patterns:
+`@$ZK_ARTIFACTS_DIR/skills/general/practices/security-scanning/SKILL.md`
+
 ## Output contract
+
+**Output budget:** `findings[].why_it_matters` ≤ 150 chars each. `summary` ≤ 200 chars. Total prose ≤ 1500 tokens. Never inline file contents or diffs. Emit structured JSON only.
 
 Return ONE JSON object as your final message (no prose around it):
 

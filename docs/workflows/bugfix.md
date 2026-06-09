@@ -52,7 +52,7 @@ Each non-CI phase runs through `runPhase`: the phase agent runs, then a `grader`
 | `test-runner` | Testing | Runs the suite / `make smoke` (fallback `make test`), captures structured `TestingOutput`. | `modelFor('testing')` -> `mid` (sonnet-4-6). |
 | `pr-author` | Handoff branches (research/impl/testing budget failures, and ci/ci-fix failures via `runCI`) | Writes a handoff document per the handoff skill when a phase exhausts budget. | Bugfix-body handoffs: `modelFor('persist')` -> `fast` (haiku-4-5). The two `runCI` handoffs pass no model -> front-matter default opus-4-8. |
 
-All six agent files exist under `.claude/agents/`, each with YAML `model: claude-opus-4-8` front matter. The workflow passes an explicit `model: modelFor(...)` only on the Discover/Research/Impl/Testing phase agents, their phase graders, the bugfix-body `pr-author` handoffs, and the final GraderFeedback persist. The CI-check agent, all `persistPhase` helper calls, the ci-fix re-run (agent + grader), and the `runCI` handoffs pass no `model` and therefore fall through to the opus-4-8 front-matter default (`runPhase` only forwards `model`/`gradeModel` when they are not `undefined`).
+All six agent files exist under `.claude/agents/`, each with YAML `model: claude-sonnet-4-6` front matter. The workflow passes an explicit `model: modelFor(...)` only on the Discover/Research/Impl/Testing phase agents, their phase graders, the bugfix-body `pr-author` handoffs, and the final GraderFeedback persist. The CI-check agent, all `persistPhase` helper calls, the ci-fix re-run (agent + grader), and the `runCI` handoffs pass no `model` and therefore fall through to the opus-4-8 front-matter default (`runPhase` only forwards `model`/`gradeModel` when they are not `undefined`).
 
 ## Schemas
 

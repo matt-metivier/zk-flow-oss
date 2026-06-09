@@ -42,14 +42,14 @@ flowchart TD
 
 ## Agents
 
-Each agent's `.md` frontmatter pins `model: claude-opus-4-8`. The workflow overrides the model at dispatch via `modelFor(phase, a)` ONLY where it passes an explicit `model:` option. Calls with no `model:` option fall back to the frontmatter default (opus). The "model tier" column below reflects what the workflow actually dispatches.
+Each agent's `.md` frontmatter pins `model: claude-sonnet-4-6`. The workflow overrides the model at dispatch via `modelFor(phase, a)` ONLY where it passes an explicit `model:` option. Calls with no `model:` option fall back to the frontmatter default (opus). The "model tier" column below reflects what the workflow actually dispatches.
 
 | Agent | Phase / call | Role | Model tier (dispatched) |
 |-------|--------------|------|-------------------------|
 | `researcher` | Discover (`discover:1`) | Discover codebase scope; emit skills to load, vault paths, related bead ids, rationale. | `modelFor('discover')` -> mid (`claude-sonnet-4-6`) |
 | `researcher` | Research (`research:N`) | Investigate topic; produce findings, evidence, gaps, synthesis, skill selection. | `modelFor('research')` -> mid (`claude-sonnet-4-6`) |
-| `grader` | inside `runPhase` (`research-grade:N`) | Grade research output against the research rubric; emit binary verdict as `review.json`. | `modelFor('grade')` -> deep (`claude-opus-4-8`) |
-| `researcher` | `persistPhase` (`persist:discover`, `persist:researchsynthesis`) | Run the `bd create`/`bd comment` shell to persist phase output to the bead. No `model:` option passed -> frontmatter default. | opus (`claude-opus-4-8`) |
+| `grader` | inside `runPhase` (`research-grade:N`) | Grade research output against the research rubric; emit binary verdict as `review.json`. | `modelFor('grade')` -> deep (`claude-sonnet-4-6`) |
+| `researcher` | `persistPhase` (`persist:discover`, `persist:researchsynthesis`) | Run the `bd create`/`bd comment` shell to persist phase output to the bead. No `model:` option passed -> frontmatter default. | opus (`claude-sonnet-4-6`) |
 | `pr-author` | handoff (`handoff:research`, `handoff:research-complete`) | Write a handoff document to `$TMPDIR` per the handoff skill; referenced on success and on budget-exhaustion failure. | `modelFor('persist')` -> fast (`claude-haiku-4-5`) |
 
 `researcher.md`, `grader.md`, and `pr-author.md` all exist under `.claude/agents/`.

@@ -1,7 +1,7 @@
 ---
 name: scope-locked-editor
 description: The ONLY writer on the coding team. Applies code edits constrained to target_files from the approved design. Runs after design phase; pr-author runs after.
-model: claude-opus-4-8
+model: claude-sonnet-4-6
 tools: Read, Grep, Glob, Edit, Write, Bash(bd *), Bash(git *), Bash(make *), Bash(cargo *), Bash(go *), Bash(npm *), mcp__codegraphcontext__*, mcp__octocode__*, mcp__repomix__*, mcp__plugin_context-mode_context-mode__*
 ---
 
@@ -81,6 +81,11 @@ The `PreToolUse` scope-lock hook blocks out-of-scope `Write` / `Edit` calls befo
 3. **Then edit.** Use `Edit` over `Write` whenever the existing file shape can be preserved.
 
 For symbol renames, use `mcp__octocode__lspGotoDefinition` + `mcp__octocode__lspFindReferences` to find all references first, then edit each one. **Never** use find-and-replace — it silently misses indirect refs.
+
+## Skill reference
+
+If `$ZK_ARTIFACTS_DIR` is set, load for output quality and prose clarity:
+`@$ZK_ARTIFACTS_DIR/skills/general/practices/humanizer/SKILL.md`
 
 ## MCP tool routing — use BEFORE Read/Grep
 

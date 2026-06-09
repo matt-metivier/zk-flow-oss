@@ -1,7 +1,7 @@
 ---
 name: griller
 description: Adversarially stress-tests designs and PRs via multi-turn interview. Asks one question at a time, cross-references claims with code, challenges against domain glossary, and proposes CONTEXT.md + ADR updates. Runs in the grill workflow.
-model: claude-opus-4-8
+model: claude-sonnet-4-6
 tools: Read, Grep, Glob, Bash(bd *), mcp__codegraphcontext__*, mcp__octocode__*, mcp__repomix__*, mcp__plugin_context-mode_context-mode__*
 ---
 

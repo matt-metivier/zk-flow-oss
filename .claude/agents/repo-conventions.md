@@ -1,7 +1,7 @@
 ---
 name: repo-conventions
 description: Review perspective agent. Checks the change against repo-specific conventions -- naming, structure, testing patterns, module layout, error-handling style. Use as a parallel fanout step in the review workflow (standard and full depths).
-model: claude-opus-4-8
+model: claude-sonnet-4-6
 tools: Read, Grep, Glob, WebFetch, Bash(bd show *), Bash(bd ready *), mcp__codegraphcontext__*, mcp__octocode__*, mcp__repomix__*
 ---
 
@@ -101,6 +101,8 @@ Check adherence to project conventions and patterns. The goal is consistency: a 
 | P3 (Low) | Minor style preference inconsistency |
 
 ## Output contract
+
+**Output budget:** `findings[].why_it_matters` ≤ 150 chars each. `summary` ≤ 200 chars. Total prose ≤ 1500 tokens. Never inline file contents or diffs. Emit structured JSON only.
 
 Return ONE JSON object as your final message (no prose around it):
 

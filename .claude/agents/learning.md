@@ -1,7 +1,7 @@
 ---
 name: learning
 description: Review perspective agent. Extracts knowledge from correct, well-written code that should flow back into the skill system -- patterns, conventions, domain rules, and operational knowledge. Runs after verdict; does NOT affect go/no-go. Use as a fanout step in the review workflow.
-model: claude-opus-4-8
+model: claude-sonnet-4-6
 tools: Read, Grep, Glob, WebFetch, Bash(bd show *), Bash(bd ready *), mcp__codegraphcontext__*, mcp__octocode__*, mcp__repomix__*
 ---
 
@@ -112,6 +112,8 @@ This perspective produces skill improvement recommendations, not go/no-go findin
 - Anything derivable from reading the code directly -- capture the why, the gotchas, the cross-repo dependencies.
 
 ## Output contract
+
+**Output budget:** `findings[].why_it_matters` ≤ 150 chars each. `summary` ≤ 200 chars. Total prose ≤ 1500 tokens. Never inline file contents or diffs. Emit structured JSON only.
 
 Return ONE JSON object as your final message (no prose around it):
 

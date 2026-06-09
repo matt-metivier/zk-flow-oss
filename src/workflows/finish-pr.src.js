@@ -1,5 +1,5 @@
 // src/workflows/finish-pr.src.js
-// @@USE: run-phase,handoff,budgets,schemas,args,bd-memory,bead-run,depth-map,verdict,ci-loop,model-tiers
+// @@USE: run-phase,handoff,budgets,schemas,args,bd-memory,bead-run,depth-map,verdict,ci-loop,model-tiers,env-check
 export const meta = {
   name: 'finish-pr',
   description: 'Resume/finish an existing PR: verify PR exists, load prior context + unresolved review threads, idempotent pre-impl check, thread-driven impl-fix loop, watch CI, reply+resolve threads, review council, testing. Entry point: pr=<url-or-number>. Optionally bead=<id> to load prior design/research context across the seam.',
@@ -8,6 +8,15 @@ export const meta = {
 // @@FRAGMENTS@@
 
 const a = readArgs(args);
+
+// Guard: bd must be initialized (run: bd init in this directory if not)
+const _bdPreflight = await agent(BD_PREFLIGHT_PROMPT, { label: 'preflight:bd', agentType: 'researcher', model: MODEL_TIERS.fast });
+if (!_bdPreflight || _bdPreflight.ok === false) {
+  const _bdReason = (_bdPreflight && _bdPreflight.reason) || 'bd not initialized — run: cd ~/dev/zk-flow && bd init';
+  await agent(handoffPrompt(_bdReason, 'Run: cd ~/dev/zk-flow && bd init, then retry.'), { label: 'handoff:bd-missing', agentType: 'researcher', model: MODEL_TIERS.fast });
+  return { verdict: 'needs_human', phase: 'bd-preflight' };
+}
+
 const pr = a.pr;
 const beadId = runBeadId(a);
 const skipReview = a.skipReview === 'true' || a.skipReview === true;
@@ -150,6 +159,7 @@ implResult = await runPhase({
   label: 'impl',
   maxIterations: PHASE_BUDGETS.impl,
   model: modelFor('impl', a), gradeModel: modelFor('grade', a),
+  posture: postureFor('impl', a),
   gradePrompt: (out) => `Grade this PR implementation fix for correctness, scope adherence to the PR's stated intent, and alignment with reviewer feedback. PR: ${pr}. Output: ${JSON.stringify(out)}`,
 });
 if (!implResult.ok) {
@@ -194,13 +204,13 @@ if (skipReview) {
 for (let ri = 1; ri <= PHASE_BUDGETS.council; ri++) {
   const reviewPersp = await parallel(validPerspectives(a.perspectives ? a.perspectives.split(',') : DEFAULT_PERSPECTIVES).map(p => () =>
     agent(
-      `Review the implementation from the "${p}" perspective. PR/MR: ${pr}. Use the project VCS CLI (detect from \`git remote get-url origin\`: gh for GitHub, glab for GitLab): run gh pr diff ${pr} OR glab mr diff ${pr} to see the diff. Impl: ${JSON.stringify(implResult.out)}`,
+      `${postureFor('review', a)}\n\nReview the implementation from the "${p}" perspective. PR/MR: ${pr}. Use the project VCS CLI (detect from \`git remote get-url origin\`: gh for GitHub, glab for GitLab): run gh pr diff ${pr} OR glab mr diff ${pr} to see the diff. Impl: ${JSON.stringify(implResult.out)}`,
       { label: `review:${p}:${ri}`, agentType: p, model: modelFor('review', a) }
     )
   ));
 
   reviewGrade = await agent(
-    `You are the arbiter. Merge duplicate findings (same line -> highest severity). Synthesize review verdict from perspective reviews (iteration ${ri}): ${JSON.stringify(reviewPersp.filter(Boolean))}`,
+    `${postureFor('grade', a)}\n\nYou are the arbiter. Merge duplicate findings (same line -> highest severity). Synthesize review verdict from perspective reviews (iteration ${ri}): ${JSON.stringify(reviewPersp.filter(Boolean))}`,
     { schema: SCHEMAS.review, agentType: 'arbiter', label: `arbiter:review:${ri}`, model: modelFor('grade', a) }
   );
   reviewRoute = routeVerdict((reviewGrade && reviewGrade.verdict) || 'BLOCK');
@@ -217,6 +227,7 @@ for (let ri = 1; ri <= PHASE_BUDGETS.council; ri++) {
       label: `impl:review-fix:${ri}`,
       maxIterations: 1,
       model: modelFor('impl', a), gradeModel: modelFor('grade', a),
+      posture: postureFor('impl', a),
       gradePrompt: (out) => `Grade this review-fix implementation. Output: ${JSON.stringify(out)}`,
     });
     if (!implResult.ok) {
@@ -246,6 +257,7 @@ const testing = await runPhase({
   label: 'testing',
   maxIterations: PHASE_BUDGETS.testing,
   model: modelFor('testing', a), gradeModel: modelFor('grade', a),
+  posture: postureFor('testing', a),
   gradePrompt: (out) => `Grade this testing output for coverage, evidence that the PR's changes work correctly, and absence of regressions. Output: ${JSON.stringify(out)}`,
 });
 if (!testing.ok) {

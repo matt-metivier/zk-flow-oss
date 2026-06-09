@@ -55,7 +55,7 @@ Every phase is a bounded grade-gated loop (`runPhase`): the phase agent runs, th
 
 ## Agents
 
-All phase/grader agents run at their **frontmatter default** model (`claude-opus-4-8`) — the `runPhase` calls pass no `model`/`gradeModel`, and `run-phase.js` only forwards a model when defined. The `PHASE_TIER` map (research/testing=`mid`) is **not** wired into this workflow. The only explicit tier selection is the handoff's `modelFor('persist', a)` → `fast` (haiku).
+All phase/grader agents run at their **frontmatter default** model (`claude-sonnet-4-6`) — the `runPhase` calls pass no `model`/`gradeModel`, and `run-phase.js` only forwards a model when defined. The `PHASE_TIER` map (research/testing=`mid`) is **not** wired into this workflow. The only explicit tier selection is the handoff's `modelFor('persist', a)` → `fast` (haiku).
 
 | Agent | Phase | Role | Model |
 |---|---|---|---|

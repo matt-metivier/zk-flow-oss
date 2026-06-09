@@ -1,5 +1,5 @@
 // src/workflows/dashboard.src.js
-// @@USE: run-phase,handoff,budgets,schemas,args,bd-memory,bead-run,model-tiers
+// @@USE: run-phase,handoff,budgets,schemas,args,bd-memory,bead-run,model-tiers,env-check
 export const meta = {
   name: 'dashboard',
   description: 'Monitoring dashboard config update: fetch JSON from API -> edit -> apply -> verify. Optional sibling delete.',
@@ -8,6 +8,15 @@ export const meta = {
 // @@FRAGMENTS@@
 
 const a = readArgs(args);
+
+// Guard: bd must be initialized (run: bd init in this directory if not)
+const _bdPreflight = await agent(BD_PREFLIGHT_PROMPT, { label: 'preflight:bd', agentType: 'researcher', model: MODEL_TIERS.fast });
+if (!_bdPreflight || _bdPreflight.ok === false) {
+  const _bdReason = (_bdPreflight && _bdPreflight.reason) || 'bd not initialized — run: cd ~/dev/zk-flow && bd init';
+  await agent(handoffPrompt(_bdReason, 'Run: cd ~/dev/zk-flow && bd init, then retry.'), { label: 'handoff:bd-missing', agentType: 'researcher', model: MODEL_TIERS.fast });
+  return { verdict: 'needs_human', phase: 'bd-preflight' };
+}
+
 const beadId = runBeadId(a);
 
 // --- REQUIRE api + id ---
@@ -65,7 +74,7 @@ const applySchema = {
   }
 };
 const applyResult = await agent(
-  `Apply the requested change to the dashboard and POST it back.
+  `${postureFor('impl', a)}\n\nApply the requested change to the dashboard and POST it back.
 API base URL: ${a.api}
 Dashboard UID: ${a.id}
 Change to make: ${a.brief || '(infer from context)'}

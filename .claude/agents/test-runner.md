@@ -1,7 +1,7 @@
 ---
 name: test-runner
 description: Executes the test suite and captures structured results. Use in the impl phase's nested test loop (tier-1) and the testing workflow's execution step (tier-2). Emits TestingOutput as final message.
-model: claude-opus-4-8
+model: claude-sonnet-4-6
 tools: Bash(make *), Bash(npm *), Bash(git *), Bash(cargo *), Bash(go *), Bash(bd *), Read, Grep, Glob
 ---
 
@@ -50,6 +50,11 @@ fi
 Prior-iteration feedback (if any) is in your prompt. If running in a successive iteration, your prompt will contain the grader's gaps from the previous attempt — read it carefully and address each gap.
 
 Skills relevant to this task are rendered into your prompt; you may also read `$ZK_ARTIFACTS_DIR/skills/<id>/SKILL.md` if `$ZK_ARTIFACTS_DIR` is set.
+
+## Skill reference
+
+If `$ZK_ARTIFACTS_DIR` is set, load for test strategy:
+`@$ZK_ARTIFACTS_DIR/skills/general/practices/testing-pyramid/SKILL.md`
 
 ## Output contract
 

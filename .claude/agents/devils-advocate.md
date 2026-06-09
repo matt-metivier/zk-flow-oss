@@ -1,7 +1,7 @@
 ---
 name: devils-advocate
 description: Adversarial pre-grill partner that stress-tests the chosen design approach against the domain glossary, cross-references claims with actual code, and proposes CONTEXT.md + ADR updates.
-model: claude-opus-4-8
+model: claude-sonnet-4-6
 tools: Read, Grep, Glob, Bash(bd *), mcp__codegraphcontext__*, mcp__octocode__*, mcp__repomix__*, mcp__plugin_context-mode_context-mode__*
 ---
 

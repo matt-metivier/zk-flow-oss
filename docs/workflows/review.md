@@ -55,7 +55,7 @@ This workflow body has no internal gate/retry loop and no handoff branch. The on
 
 ## Agents
 
-All perspective agents fan out in parallel during Perspectives; the arbiter runs alone in Synthesis. The model tier below is what the workflow assigns at spawn time via `modelFor`, which overrides each agent file's own `model:` frontmatter (all six files declare `claude-opus-4-8`).
+All perspective agents fan out in parallel during Perspectives; the arbiter runs alone in Synthesis. The model tier below is what the workflow assigns at spawn time via `modelFor`, which overrides each agent file's own `model:` frontmatter (all six files declare `claude-sonnet-4-6`).
 
 | Agent | Phase | Role | Model tier (spawn-time) |
 |-------|-------|------|--------------------------|
@@ -64,7 +64,7 @@ All perspective agents fan out in parallel during Perspectives; the arbiter runs
 | `security` | Perspectives | Identifies vulnerabilities, unsafe patterns, attack vectors | `review` -> mid (claude-sonnet-4-6) |
 | `performance` | Perspectives | Identifies latency, memory, and resource-exhaustion patterns | `review` -> mid (claude-sonnet-4-6) |
 | `learning` | Perspectives | Extracts reusable knowledge for the skill system; emits skill suggestions, not go/no-go findings | `review` -> mid (claude-sonnet-4-6) |
-| `arbiter` | Synthesis | Reconciles all perspectives, dedups findings (same file:line -> highest severity), produces the verdict | `grade` -> deep (claude-opus-4-8) |
+| `arbiter` | Synthesis | Reconciles all perspectives, dedups findings (same file:line -> highest severity), produces the verdict | `grade` -> deep (claude-sonnet-4-6) |
 
 Opt-in (non-default) perspectives permitted by `validPerspectives` but not run unless requested: `persona`, `repo-conventions` (agent files present).
 

@@ -7,7 +7,7 @@ Manual improvement pipeline: analyze GraderFeedback beads -> propose changes -> 
 **Phases:** Analyze -> Reflect -> Verify -> Grade -> Stage
 
 **Args:**
-- `window=N` (default: 10) -- how many recent beads to analyze
+- `window=<duration>` (default: `12h`) -- lookback window for GraderFeedback beads (e.g. `12h`, `7d`, `24h`)
 - `autoApprove=true` -- skip human confirmation before staging
 
 **Example:** `/improve window=20`

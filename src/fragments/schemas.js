@@ -8,5 +8,4 @@ import review from '../../schemas/review.json' with { type: 'json' };
 import testing from '../../schemas/testing.json' with { type: 'json' };
 import discover from '../../schemas/discover.json' with { type: 'json' };
 import proposal from '../../schemas/proposal.json' with { type: 'json' };
-import solution from '../../schemas/solution.json' with { type: 'json' };
-export const SCHEMAS = { research, design, implementation, review, testing, discover, proposal, solution };
+export const SCHEMAS = { research, design, implementation, review, testing, discover, proposal };

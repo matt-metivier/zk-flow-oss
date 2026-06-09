@@ -1,10 +1,36 @@
 {
   "hooks": {
-    "PreToolUse": [
-      { "matcher": "Read|Grep|Glob", "hooks": [ { "type": "prompt", "prompt": "If the target is source code, prefer MCP: Octocode LSP for definition/references, CodeGraphContext for callers/blast-radius, Repomix for directory overviews. Allow Read/Grep for non-code or multi-file regex." } ] }
-    ],
     "PostToolUse": [
-      { "matcher": "Bash", "hooks": [ { "type": "command", "if": "Bash(git commit*)", "command": "cgc index 2>/dev/null || true" } ] }
+      {
+        "hooks": [
+          {
+            "command": "cgc index 2>/dev/null || true",
+            "if": "Bash(git commit*)",
+            "type": "command"
+          }
+        ],
+        "matcher": "Bash"
+      }
+    ],
+    "PreToolUse": [
+      {
+        "hooks": [
+          {
+            "prompt": "If the target is source code, prefer MCP: Octocode LSP for definition/references, CodeGraphContext for callers/blast-radius, Repomix for directory overviews. Allow Read/Grep for non-code or multi-file regex.",
+            "type": "prompt"
+          }
+        ],
+        "matcher": "Read|Grep|Glob"
+      },
+      {
+        "hooks": [
+          {
+            "prompt": "If the Read request targets a directory overview question, use Repomix MCP to pack the directory instead of reading individual files. For single-file reads, allow normally.",
+            "type": "prompt"
+          }
+        ],
+        "matcher": "Read"
+      }
     ]
   }
 }

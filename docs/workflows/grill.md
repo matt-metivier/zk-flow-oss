@@ -41,8 +41,8 @@ Both agents are read-only/advisory and emit a single JSON object as their final 
 
 | Agent | Phase | Role | Model tier (workflow spawn) |
 | --- | --- | --- | --- |
-| `griller` | Grill (looped) | Adversarial interviewer: 3 rounds of "why"/"how do you know" per claim, hunts unstated assumptions and failure modes, challenges terms against `CONTEXT.md`, proposes CONTEXT.md/ADR updates inline | `modelFor('grill')` -> `mid` = `claude-sonnet-4-6` (frontmatter says `claude-opus-4-8`; workflow override wins) |
-| `decider` | Grill (after loop) | Synthesizes the griller transcript into structured `challenges[]` and a survival verdict (`survives` / `needs_revision`), weighting by real risk; adjudicates glossary and ADR proposals | `modelFor('grade')` -> `deep` = `claude-opus-4-8` |
+| `griller` | Grill (looped) | Adversarial interviewer: 3 rounds of "why"/"how do you know" per claim, hunts unstated assumptions and failure modes, challenges terms against `CONTEXT.md`, proposes CONTEXT.md/ADR updates inline | `modelFor('grill')` -> `mid` = `claude-sonnet-4-6` (frontmatter says `claude-sonnet-4-6`; workflow override wins) |
+| `decider` | Grill (after loop) | Synthesizes the griller transcript into structured `challenges[]` and a survival verdict (`survives` / `needs_revision`), weighting by real risk; adjudicates glossary and ADR proposals | `modelFor('grade')` -> `deep` = `claude-sonnet-4-6` |
 
 Both agents exist: `.claude/agents/griller.md`, `.claude/agents/decider.md`.
 

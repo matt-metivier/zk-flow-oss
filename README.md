@@ -12,12 +12,46 @@ service -- it runs entirely inside Claude Code.
 
 ## Requirements
 
+## Setup
+
+```bash
+# 1. Clone and install
+git clone https://github.com/matt-metivier/zk-flow ~/dev/zk-flow
+cd ~/dev/zk-flow && npm install
+
+# 2. Initialize bd (required — workflows fail fast without it)
+bd init
+
+# 3. Set ZK_ARTIFACTS_DIR (required — skill/persona/vault lookup fails without it)
+echo 'export ZK_ARTIFACTS_DIR="$HOME/dev/zk-artifacts"' >> ~/.zshrc
+source ~/.zshrc
+
+# 4. Symlink into Claude Code global config
+ln -s ~/dev/zk-flow/.claude/commands   ~/.claude/commands
+ln -s ~/dev/zk-flow/.claude/workflows  ~/.claude/workflows
+cp ~/dev/zk-flow/.claude/agents/*.md   ~/.claude/agents/
+
+# 5. Build workflows
+npm run build
+
+# 6. Verify
+/health   # (inside a Claude Code session rooted in ~/dev/zk-flow)
+```
+
+### Shell profile variables required
+
+```bash
+export ZK_ARTIFACTS_DIR="$HOME/dev/zk-artifacts"   # skills, vault, personas
+export ZK_VAULT_DIR="$ZK_ARTIFACTS_DIR/vault"        # optional convenience alias
+```
+
+
 | Requirement | Notes |
 |---|---|
 | **Claude Code >= v2.1.154** | Dynamic `/workflows` is a research-preview feature; update Claude Code if workflows don't appear |
 | **Node.js** | Any recent LTS (18+); used only by the build step |
-| **`bd` (beads CLI)** | Optional. Structured run memory + improve signal. [github.com/steveyegge/beads](https://github.com/steveyegge/beads). Agents degrade gracefully if `bd` is absent |
-| **`zk-artifacts` repo** | Optional. A private companion repo holding your skills, vault, and personas -- see [Setting up zk-artifacts](#setting-up-zk-artifacts) |
+| **`bd` (beads CLI)** | **Required.** Workflows fail fast if not initialized. Install: [github.com/steveyegge/beads](https://github.com/steveyegge/beads). Init: `cd ~/dev/zk-flow && bd init` |
+| **`zk-artifacts` repo** | **Required for skill selection.** Workflows fail fast if `ZK_ARTIFACTS_DIR` unset. Holds skills, vault, personas, machine-specific context. See [Setting up zk-artifacts](#setting-up-zk-artifacts) |
 
 ---
 
