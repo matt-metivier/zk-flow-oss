@@ -31,7 +31,9 @@ export async function renderSkills(selectedSkills, modelTier) {
     if (result && result.skills_content) {
       return `\n\n## Selected Skills (loaded by researcher)\n\n${result.skills_content}`;
     }
-  } catch (_) { /* non-fatal: proceed without skills if render fails */ }
+  } catch (e) {
+    console.warn(`[skill-render] Failed to render skills: ${e.message}. Proceeding without skill context.`);
+  }
   return '';
 }
 
@@ -39,5 +41,20 @@ export async function renderSkills(selectedSkills, modelTier) {
 export function warnIfSkillsDropped(selectedSkills, contextLabel) {
   if (selectedSkills && selectedSkills.length > 0) {
     console.warn(`[skill-render:${contextLabel}] selected_skills has ${selectedSkills.length} entries but rendering is not wired. Skills will not reach downstream agents. Add: const skillsBlock = await renderSkills(research.out.selected_skills);`);
+  }
+}
+
+// Validates that selected skill paths look like real skill IDs before sending to agent.
+// Skill IDs are relative paths under $ZK_ARTIFACTS_DIR/skills/ (no leading slash).
+export function assertSelectedSkillsValid(selectedSkills, phaseName) {
+  if (!selectedSkills || selectedSkills.length === 0) return;
+  const invalid = selectedSkills.filter(s => 
+    !s || typeof s !== 'string' || s.startsWith('/') || s.includes('..') || !s.includes('/')
+  );
+  if (invalid.length > 0) {
+    console.warn(
+      `[skill-render:${phaseName}] ${invalid.length} invalid skill path(s): ${invalid.join(', ')}. ` +
+      'Skill IDs must be relative paths like "general/infrastructure/clickhouse/SKILL.md".'
+    );
   }
 }

@@ -1,5 +1,5 @@
 // src/workflows/dashboard.src.js
-// @@USE: run-phase,handoff,budgets,schemas,args,bd-memory,bead-run,model-tiers,env-check
+// @@USE: handoff,schemas,args,bd-memory,bead-run,model-tiers,env-check
 export const meta = {
   name: 'dashboard',
   description: 'Monitoring dashboard config update: fetch JSON from API -> edit -> apply -> verify. Optional sibling delete.',

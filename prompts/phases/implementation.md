@@ -52,4 +52,8 @@ fi
 
 ## Output
 
+
+**Required schema fields** (`schemas/implementation.json`):
+`outcome`, `files_changed[]`, `commits[]`, `tests_run`, `tests_passed`, `tests_failed`, `test_cmd`, `approach_rationale`
+
 Emit JSON matching `schemas/implementation.json` as final message. Include `tests_run: true`, `tests_passed`, `test_cmd` used.

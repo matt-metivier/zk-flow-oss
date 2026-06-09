@@ -1,4 +1,4 @@
-// @@USE: run-phase,handoff,budgets,schemas,args,bd-memory,bead-run,model-tiers,env-check,prompt-loader
+// @@USE: run-phase,handoff,budgets,schemas,args,bead-run,model-tiers,env-check,prompt-loader
 export const meta = {
   name: 'debug',
   description: 'Debug lifecycle: reproduce+root-cause -> fix -> test. Diagnoses a reported bug to ROOT CAUSE, then fixes it. Tighter than bugfix: starts from a symptom.',
@@ -26,9 +26,11 @@ const rootCause = await runPhase({
   phaseSchema: SCHEMAS.research,
   agentType: 'researcher',
   label: 'rootcause',
+  phaseName: 'research',
   maxIterations: PHASE_BUDGETS.research,
   model: modelFor('research', a), gradeModel: modelFor('grade', a),
   posture: postureFor('research', a),
+  beadId: beadId,
   gradePrompt: (out) => `Grade this root-cause analysis: reject (REQUEST_CHANGES) if evidence_quality is 'weak' or root cause lacks file:line proof. Output: ${JSON.stringify(out)}`,
 });
 if (!rootCause.ok) {
@@ -44,9 +46,11 @@ const fixResult = await runPhase({
   phaseSchema: SCHEMAS.implementation,
   agentType: 'scope-locked-editor',
   label: 'fix',
+  phaseName: 'implementation',
   maxIterations: PHASE_BUDGETS.impl,
   model: modelFor('impl', a), gradeModel: modelFor('grade', a),
   posture: postureFor('impl', a),
+  beadId: beadId,
   gradePrompt: (out) => `Grade this fix against the implementation rubric: verify it targets the root cause (not just the symptom), and that a regression test is included. Output: ${JSON.stringify(out)}`,
 });
 if (!fixResult.ok) {
@@ -65,6 +69,7 @@ const testResult = await runPhase({
   maxIterations: PHASE_BUDGETS.testing,
   model: modelFor('testing', a), gradeModel: modelFor('grade', a),
   posture: postureFor('testing', a),
+  beadId: beadId,
   gradePrompt: (out) => `Grade this test run: confirm the original symptom is gone and the regression test passes. Output: ${JSON.stringify(out)}`,
 });
 if (!testResult.ok) {

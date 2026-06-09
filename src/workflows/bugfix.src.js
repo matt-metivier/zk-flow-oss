@@ -1,5 +1,5 @@
 // src/workflows/bugfix.src.js
-// @@USE: run-phase,handoff,verdict,budgets,schemas,args,bd-memory,bead-run,ci-loop,model-tiers,env-check,guardrails,skill-render,persona-load,prompt-loader
+// @@USE: run-phase,handoff,budgets,schemas,args,bd-memory,bead-run,ci-loop,model-tiers,env-check,guardrails,skill-render,persona-load,prompt-loader
 export const meta = {
   name: 'bugfix',
   description: 'Bug fix lifecycle: discover->research->impl->ci->testing. Mirrors feature minus design and review phases.',
@@ -37,6 +37,7 @@ const research = await runPhase({
   maxIterations: PHASE_BUDGETS.research,
   model: modelFor('research', a), gradeModel: modelFor('grade', a),
   posture: postureFor('research', a),
+  beadId: beadId,
   gradePrompt: (out) => `Grade this research output for completeness, evidence quality, and root cause clarity. Output: ${JSON.stringify(out)}`,
 });
 if (!research.ok) {
@@ -45,6 +46,7 @@ if (!research.ok) {
 }
 await persistPhase(beadId, 'Research', research.out);
 assertEvidencePresent(research.out, 'Research');
+  assertEvidenceQuality(research.out, 'Research');
   const skillsBlock = await renderSkills(discovery.selected_skills, modelFor('research', a));
 
 // --- DISCOVER ---
@@ -63,9 +65,11 @@ let implResult = await runPhase({
   phaseSchema: SCHEMAS.implementation,
   agentType: 'scope-locked-editor',
   label: 'impl',
+  phaseName: 'implementation',
   maxIterations: PHASE_BUDGETS.impl,
   model: modelFor('impl', a), gradeModel: modelFor('grade', a),
   posture: postureFor('impl', a),
+  beadId: beadId,
   gradePrompt: (out) => `Grade this implementation for correctness, scope adherence, and test coverage. Output: ${JSON.stringify(out)}`,
 });
 if (!implResult.ok) {
@@ -89,6 +93,7 @@ const testing = await runPhase({
   maxIterations: PHASE_BUDGETS.testing,
   model: modelFor('testing', a), gradeModel: modelFor('grade', a),
   posture: postureFor('testing', a),
+  beadId: beadId,
   gradePrompt: (out) => `Grade this testing output for coverage, regression safety, and evidence that the bug is fixed. Output: ${JSON.stringify(out)}`,
 });
 if (!testing.ok) {

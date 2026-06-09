@@ -42,4 +42,8 @@ The workflow runs devils-advocate + griller on your draft. Respond to their chal
 
 ## Output
 
+
+**Required schema fields** (`schemas/design.json`):
+`outcome (="design_complete")`, `overview`, `decisions[]`, `affirmed_files[]`, `target_files[]`, `acceptance_criteria[]`, `simplicity_check`
+
 Emit JSON matching `schemas/design.json` as final message. Write `$TMPDIR/design.md` (human-readable).

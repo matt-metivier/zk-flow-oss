@@ -1,0 +1,70 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "InvestigateOutput",
+  "description": "Output of the investigate workflow hypothesis phase.",
+  "type": "object",
+  "required": ["outcome", "affected_service", "signals", "hypotheses", "mitigation_proposals"],
+  "properties": {
+    "outcome": {
+      "type": "string",
+      "enum": ["hypotheses_ready", "insufficient_signal", "needs_human"],
+      "description": "hypotheses_ready = proceed to propose; insufficient_signal = more data needed; needs_human = human context required"
+    },
+    "affected_service": {
+      "type": "string",
+      "description": "Name of the affected service or component"
+    },
+    "time_window": {
+      "type": "string",
+      "description": "Time range of the incident (e.g. 'now-1h to now')"
+    },
+    "signals": {
+      "type": "array",
+      "description": "Observability signals gathered",
+      "items": {
+        "type": "object",
+        "required": ["source", "signal_type", "summary"],
+        "properties": {
+          "source": { "type": "string", "description": "MCP key or tool used" },
+          "signal_type": { "type": "string", "enum": ["metric", "log", "alert", "trace", "incident", "dashboard"] },
+          "summary": { "type": "string" },
+          "anomaly": { "type": "boolean" }
+        }
+      }
+    },
+    "hypotheses": {
+      "type": "array",
+      "description": "Ranked hypotheses for root cause",
+      "items": {
+        "type": "object",
+        "required": ["rank", "hypothesis", "supporting_signals", "confidence"],
+        "properties": {
+          "rank": { "type": "integer" },
+          "hypothesis": { "type": "string" },
+          "supporting_signals": { "type": "array", "items": { "type": "string" } },
+          "confidence": { "type": "string", "enum": ["high", "medium", "low"] },
+          "related_past_incidents": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    },
+    "mitigation_proposals": {
+      "type": "array",
+      "description": "Proposed mitigations — human must approve before execution",
+      "items": {
+        "type": "object",
+        "required": ["proposal", "risk_level", "reversible", "requires_human"],
+        "properties": {
+          "proposal": { "type": "string" },
+          "risk_level": { "type": "string", "enum": ["low", "medium", "high", "critical"] },
+          "reversible": { "type": "boolean" },
+          "requires_human": { "type": "boolean", "description": "Always true in zk-flow" },
+          "runbook_ref": { "type": "string" }
+        }
+      }
+    },
+    "evidence_quality": {
+      "type": "string",
+      "enum": ["strong", "adequate", "weak"]
+    }
+  }
+}

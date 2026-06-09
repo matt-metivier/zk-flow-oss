@@ -60,7 +60,9 @@ if (startAt === 'discover') {
     agentType: 'researcher',
     label: 'research',
     maxIterations: PHASE_BUDGETS.research,
-    gradePrompt: (out) => `Grade this research output for completeness, evidence quality, and coverage of the feature request. Output: ${JSON.stringify(out)}`,
+    beadId: beadId,
+    beadId: beadId,
+  gradePrompt: (out) => `Grade this research output for completeness, evidence quality, and coverage of the feature request. Output: ${JSON.stringify(out)}`,
   });
   if (!research.ok) {
     await agent(handoffPrompt('research did not pass within budget', 'rerun /feature or refine the task'), { agentType: 'pr-author', label: 'handoff:research', model: modelFor('persist', a) });
@@ -68,6 +70,7 @@ if (startAt === 'discover') {
   }
   await persistPhase(beadId, 'Research', research.out);
   assertEvidencePresent(research.out, 'Research');
+  assertEvidenceQuality(research.out, 'Research');
 
   // --- DISCOVER (after research — uses findings for better skill/persona/repo selection) ---
   phase('Discover');
@@ -161,11 +164,14 @@ let implResult = await runPhase({
   phaseSchema: SCHEMAS.implementation,
   agentType: 'scope-locked-editor',
   label: 'impl',
+  phaseName: 'implementation',
   maxIterations: PHASE_BUDGETS.impl,
   model: modelFor('impl', a), gradeModel: modelFor('grade', a),
   posture: postureFor('impl', a),
+  beadId: beadId,
   gradePrompt: (out) => `Grade this implementation for correctness, scope adherence, test coverage, and alignment with the design. Output: ${JSON.stringify(out)}`,
 });
+assertPhaseOutput(implResult.out, 'Impl');
 if (!implResult.ok) {
   await agent(handoffPrompt('impl did not pass within budget', 'investigate manually or refine the task'), { agentType: 'pr-author', label: 'handoff:impl', model: modelFor('persist', a) });
   return { verdict: 'needs_human', phase: 'impl' };
@@ -211,10 +217,13 @@ for (let ri = 1; ri <= PHASE_BUDGETS.council; ri++) {
       phaseSchema: SCHEMAS.implementation,
       agentType: 'scope-locked-editor',
       label: `impl:review-fix:${ri}`,
+      phaseName: 'implementation',
       maxIterations: 1,
       model: modelFor('impl', a), gradeModel: modelFor('grade', a),
       posture: postureFor('impl', a),
-      gradePrompt: (out) => `Grade this review-fix implementation. Output: ${JSON.stringify(out)}`,
+      beadId: beadId,
+    beadId: beadId,
+  gradePrompt: (out) => `Grade this review-fix implementation. Output: ${JSON.stringify(out)}`,
     });
     if (!implResult.ok) {
       await agent(handoffPrompt('review-fix impl failed within budget', 'investigate review findings manually'), { agentType: 'pr-author', label: 'handoff:review-fix', model: modelFor('persist', a) });
@@ -242,6 +251,7 @@ const testing = await runPhase({
   maxIterations: PHASE_BUDGETS.testing,
   model: modelFor('testing', a), gradeModel: modelFor('grade', a),
   posture: postureFor('testing', a),
+  beadId: beadId,
   gradePrompt: (out) => `Grade this testing output for coverage, evidence that the feature works, and absence of regressions. Output: ${JSON.stringify(out)}`,
 });
 if (!testing.ok) {

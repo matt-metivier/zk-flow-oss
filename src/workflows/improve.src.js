@@ -1,5 +1,5 @@
 // src/workflows/improve.src.js
-// @@USE: schemas,bd-memory,args,model-tiers,env-check
+// @@USE: schemas,bd-memory,args,model-tiers,env-check,handoff,prompt-loader
 export const meta = {
   name: 'improve',
   description: 'Manual improvement pipeline: analyze feedback beads -> propose -> verify -> grade -> stage as git branch. Never auto-merges.',
@@ -41,7 +41,7 @@ await persistSI('FeedbackAnalysis', feedbackAnalysis);
 // --- REFLECT: generate proposals ---
 phase('Reflect');
 const reflection = await agent(
-  `${postureFor('research', a)}\n\nReflector: generate improvement proposals based on this feedback cluster analysis: ${JSON.stringify(feedbackAnalysis)}. Each proposal targets a specific agent, skill, or workflow phase. Output a list of proposals conforming to the proposal schema.`,
+  loadPhasePrompt('self-improvement', { request: JSON.stringify(feedbackAnalysis) }),
   { agentType: 'reflector', label: 'reflector:1', model: modelFor('research', a) }
 );
 

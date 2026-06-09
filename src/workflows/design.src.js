@@ -1,5 +1,5 @@
 // src/workflows/design.src.js
-// @@USE: run-phase,handoff,depth-map,verdict,budgets,schemas,args,bd-memory,bead-run,model-tiers,env-check,guardrails,skill-render,persona-load,prompt-loader
+// @@USE: run-phase,handoff,depth-map,verdict,budgets,schemas,args,bead-run,model-tiers,env-check,guardrails,skill-render,persona-load,prompt-loader
 export const meta = {
   name: 'design',
   description: 'Discover + research + design panel with handoff boundary to feature impl',
@@ -37,6 +37,7 @@ const research = await runPhase({
   maxIterations: PHASE_BUDGETS.research,
   model: modelFor('research', a), gradeModel: modelFor('grade', a),
   posture: postureFor('research', a),
+  beadId: beadId,
   gradePrompt: (out) => `Grade this research output for completeness, evidence quality, and relevance to the design task. Output: ${JSON.stringify(out)}`,
 });
 if (!research.ok) {
@@ -45,13 +46,15 @@ if (!research.ok) {
 }
 await persistPhase(beadId, 'Research', research.out);
 assertEvidencePresent(research.out, 'Research');
+  assertRequiredFields(research.out, ['key_findings', 'synthesis'], 'Research');
+  assertEvidenceQuality(research.out, 'Research');
   const skillsBlock = await renderSkills(discovery.selected_skills, modelFor('research', a));
 
 // --- DESIGN PANEL (with perspectives inside the loop) ---
 phase('Design');
 // designer draft
 let design = await agent(
-  `${postureFor('design', a)}\n\nDraft the design for this feature. Use SQCA format (Summary, Questions, Context, Approach). Research: ${JSON.stringify(research.out)}. Request: ${a._ ? a._.join(' ') : ''}`,
+  `${postureFor('design', a)}\n\nDraft the design for this feature. Use SQCA format (Summary, Questions, Context, Approach). Research: ${JSON.stringify(research.out)}. Request: ${a._ ? a._.join(' ') : ''}${skillsBlock ? '\n\n' + skillsBlock : ''}`,
   { schema: SCHEMAS.design, agentType: 'designer', label: 'designer:1', model: modelFor('design', a) }
 );
 

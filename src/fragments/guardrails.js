@@ -38,6 +38,7 @@ export function assertTargetFiles(output, phaseName) {
   }
 }
 
+// DEFERRED: scope enforcement is handled by scope-lock hook in .claude/settings.json
 export function assertScopeNotExceeded(changedFiles, allowedFiles, phaseName) {
   if (!Array.isArray(changedFiles) || !Array.isArray(allowedFiles)) return;
   const violations = changedFiles.filter(f => !allowedFiles.some(a => f.startsWith(a) || a.startsWith(f)));
@@ -48,6 +49,7 @@ export function assertScopeNotExceeded(changedFiles, allowedFiles, phaseName) {
 
 // Wrap a phase agent call with assertion. Returns output or throws.
 // Usage: const result = await guardedPhase('Research', researchOutput, () => assertEvidencePresent(researchOutput, 'Research'));
+// DEFERRED: utility wrapper, not yet wired into workflows
 export async function guardedPhase(phaseName, output, ...assertFns) {
   assertPhaseOutput(output, phaseName);
   for (const fn of assertFns) fn();
@@ -68,5 +70,49 @@ export function assertDiscoverValid(discovery, phaseName) {
   if (!discovery.rationale && !discovery.reason) {
     throw new Error(`[guardrail:${phaseName}] Discover output missing rationale. ` +
       'Agent must explain why skills/vault paths were selected (or why none matched).');
+  }
+}
+
+export function assertEvidenceQuality(output, phaseName) {
+  if (!output) return;
+  const quality = output.evidence_quality;
+  if (quality === 'weak') {
+    throw new Error(
+      `[guardrail:${phaseName}] evidence_quality = weak. Agent produced unverified claims. ` +
+      'Every finding needs file:line citation or vault path. Grader should also catch this.'
+    );
+  }
+  if (output.key_findings) {
+    const weakFindings = (output.key_findings || []).filter(f => f.evidence_quality === 'weak');
+    if (weakFindings.length > 0) {
+      throw new Error(
+        `[guardrail:${phaseName}] ${weakFindings.length} finding(s) have evidence_quality=weak. ` +
+        'All findings must be backed by file:line or vault evidence.'
+      );
+    }
+  }
+}
+
+// DEFERRED: model not exposed by workflow runtime — advisory only
+export function assertModelRespected(out, expectedPhase) {
+  // Can't enforce model from workflow JS — just surface a warning in the output receipt
+  // if the agent emitted a model_used field that differs from expected tier.
+  // Agents don't currently emit model_used, so this is advisory only.
+  if (out && out.model_used && out.model_used.includes('haiku')) {
+    console.warn(
+      `[guardrail:${expectedPhase}] Agent reported using haiku for a phase that may need deeper reasoning. ` +
+      'If output quality is low, retry with model=deep.'
+    );
+  }
+}
+
+export function assertFindings(gradeOutput, phaseName) {
+  if (!gradeOutput) return;
+  const { verdict, findings } = gradeOutput;
+  if (verdict && verdict !== 'APPROVE' && (!findings || findings.length === 0)) {
+    throw new Error(
+      `[guardrail:${phaseName}] Grader emitted ${verdict} with empty findings[]. ` +
+      'Every REQUEST_CHANGES or BLOCK verdict must cite specific findings.'
+    );
   }
 }

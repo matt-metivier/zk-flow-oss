@@ -40,4 +40,8 @@ Watch CI, detect failures, trigger targeted fixes. Evidence-scanner reads CI out
 
 ## Output
 
+
+**Required schema fields** (`schemas/review.json` for perspectives / `schemas/investigate.json` for CI):
+`ci_passed` (boolean), `failures[]` (each: check name, error summary, file:line), `iterations` (fix loop count), `final_status` (green|exhausted|flaky_escalated)
+
 Emit `{ci_passed, failures, iterations, final_status}` as final message. The workflow validates and routes based on `ci_passed`.
