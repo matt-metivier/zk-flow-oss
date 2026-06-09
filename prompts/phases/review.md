@@ -6,6 +6,39 @@
 
 Multi-perspective code review. Perspectives run in parallel; arbiter synthesizes. Each perspective evaluates ONLY the criteria for its depth and shallower.
 
+
+## Deterministic pre-review (run before perspectives — from open-code-review methodology)
+
+Hard constraints that engineering logic handles better than agent judgment:
+
+### File selection (deterministic)
+
+```bash
+# Get the exact changeset — don't let agent decide scope
+git diff --name-only HEAD~1..HEAD 2>/dev/null || git diff --name-only --cached
+```
+
+For each changed file, also read:
+- Its test file (if exists at conventional path: `test_*.py`, `*_test.go`, `*.test.ts`)
+- Its sibling files that share state (same module, closely coupled)
+
+Do NOT let the agent skip files due to size or complexity. Every changed file gets reviewed.
+
+### Related-file bundling
+
+Group logically-related files into one review unit before running perspective agents.
+Example: `message_en.properties` + `message_zh.properties` → review together.
+Example: `auth.go` + `auth_test.go` → review together.
+
+This prevents missing context that only appears when reading related files side-by-side.
+
+### Reflection pass (after all perspectives complete)
+
+Before emitting final verdict, run a line-accuracy check:
+- For each finding with a `file:line` reference: verify the line still exists and matches the finding
+- If line number is wrong (common with large diffs): correct it or mark `line: null` with `context:` field
+- Position drift is the most common review failure mode (open-code-review production data)
+
 ## Perspective roster
 
 | Perspective | Depth activation | Focus |
