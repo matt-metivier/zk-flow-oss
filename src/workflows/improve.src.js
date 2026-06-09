@@ -1,5 +1,5 @@
 // src/workflows/improve.src.js
-// @@USE: schemas,bd-memory,args,model-tiers
+// @@USE: schemas,bd-memory,args,model-tiers,env-check
 export const meta = {
   name: 'improve',
   description: 'Manual improvement pipeline: analyze feedback beads -> propose -> verify -> grade -> stage as git branch. Never auto-merges.',
@@ -8,6 +8,15 @@ export const meta = {
 // @@FRAGMENTS@@
 
 const a = readArgs(args);
+
+// Guard: bd must be initialized (run: bd init in this directory if not)
+const _bdPreflight = await agent(BD_PREFLIGHT_PROMPT, { label: 'preflight:bd', agentType: 'researcher', model: MODEL_TIERS.fast });
+if (!_bdPreflight || _bdPreflight.ok === false) {
+  const _bdReason = (_bdPreflight && _bdPreflight.reason) || 'bd not initialized — run: cd ~/dev/zk-flow && bd init';
+  await agent(handoffPrompt(_bdReason, 'Run: cd ~/dev/zk-flow && bd init, then retry.'), { label: 'handoff:bd-missing', agentType: 'researcher', model: MODEL_TIERS.fast });
+  return { verdict: 'needs_human', phase: 'bd-preflight' };
+}
+
 const window = a.window || '12h';
 const autoApprove = a.autoApprove ? a.autoApprove.split(',').map(s => s.trim()) : [];
 const siBeadId = 'improve';
@@ -19,7 +28,7 @@ async function persistSI(type, payload) {
 // --- ANALYZE FEEDBACK ---
 phase('Analyze');
 const feedbackAnalysis = await agent(
-  `Analyze-feedback: read beads via '${bdReady(null)}' and '${bdShow(siBeadId)}'. Cluster GraderFeedback events by phase, rubric, and skill over the last ${window}. Count events. If fewer than 5 feedback events are found, return { skipped: 'below threshold', count: <n> }. Otherwise return clusters with pattern summaries.`,
+  `${postureFor('research', a)}\n\nAnalyze-feedback: read beads via '${bdReady(null)}' and '${bdShow(siBeadId)}'. Cluster GraderFeedback events by phase, rubric, and skill over the last ${window}. Count events. If fewer than 5 feedback events are found, return { skipped: 'below threshold', count: <n> }. Otherwise return clusters with pattern summaries.`,
   { label: 'analyze-feedback:1', agentType: 'evidence-scanner', model: modelFor('research', a) }
 );
 
@@ -32,7 +41,7 @@ await persistSI('FeedbackAnalysis', feedbackAnalysis);
 // --- REFLECT: generate proposals ---
 phase('Reflect');
 const reflection = await agent(
-  `Reflector: generate improvement proposals based on this feedback cluster analysis: ${JSON.stringify(feedbackAnalysis)}. Each proposal targets a specific agent, skill, or workflow phase. Output a list of proposals conforming to the proposal schema.`,
+  `${postureFor('research', a)}\n\nReflector: generate improvement proposals based on this feedback cluster analysis: ${JSON.stringify(feedbackAnalysis)}. Each proposal targets a specific agent, skill, or workflow phase. Output a list of proposals conforming to the proposal schema.`,
   { agentType: 'reflector', label: 'reflector:1', model: modelFor('research', a) }
 );
 
@@ -41,7 +50,7 @@ await persistSI('Reflection', reflection);
 // --- VERIFY: filter disallowed proposals ---
 phase('Verify');
 const verified = await agent(
-  `Proposal-verifier: review these proposals and filter out any that: (1) violate Iron Law constraints, (2) if $ZK_ARTIFACTS_DIR/protected.json exists - target protected skills listed there (treat absent file as empty protected list, do not fail), or (3) are trivial/noise. Return only actionable, safe proposals. Proposals: ${JSON.stringify(reflection)}`,
+  `${postureFor('verify', a)}\n\nProposal-verifier: review these proposals and filter out any that: (1) violate Iron Law constraints, (2) if $ZK_ARTIFACTS_DIR/protected.json exists - target protected skills listed there (treat absent file as empty protected list, do not fail), or (3) are trivial/noise. Return only actionable, safe proposals. Proposals: ${JSON.stringify(reflection)}`,
   { label: 'proposal-verifier:1', agentType: 'proposal-verifier', model: modelFor('research', a) }
 );
 
@@ -54,7 +63,7 @@ await persistSI('VerifiedProposals', verified);
 // --- GRADE proposals ---
 phase('Grade');
 const graded = await agent(
-  `Grader: evaluate the quality and priority of these proposals. Score each by: impact, safety, effort. Rank them. Proposals: ${JSON.stringify(verified)}`,
+  `${postureFor('grade', a)}\n\nGrader: evaluate the quality and priority of these proposals. Score each by: impact, safety, effort. Rank them. Proposals: ${JSON.stringify(verified)}`,
   { schema: SCHEMAS.review, agentType: 'grader', label: 'grader:proposals', model: modelFor('grade', a) }
 );
 

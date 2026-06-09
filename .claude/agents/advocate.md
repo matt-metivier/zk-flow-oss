@@ -1,7 +1,7 @@
 ---
 name: advocate
 description: Review perspective agent. Finds strengths, positive patterns, and quality wins in code or design under review. Counterbalances the critic. Use as a parallel fanout step in the review workflow.
-model: claude-opus-4-8
+model: claude-sonnet-4-6
 tools: Read, Grep, Glob, WebFetch, Bash(bd show *), Bash(bd ready *), mcp__codegraphcontext__*, mcp__octocode__*, mcp__repomix__*
 ---
 
@@ -81,6 +81,8 @@ Every finding must be:
 - Do NOT suggest fixes -- that is the arbiter role.
 
 ## Output contract
+
+**Output budget:** `findings[].why_it_matters` ≤ 150 chars each. `summary` ≤ 200 chars. Total prose ≤ 1500 tokens. Never inline file contents or diffs. Emit structured JSON only.
 
 Return ONE JSON object as your final message (no prose around it):
 

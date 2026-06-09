@@ -54,7 +54,7 @@ flowchart TD
 
 ## Agents
 
-All agents resolve to `.claude/agents/<name>.md`. Model column is the `modelFor(phase)` argument actually passed at the call site (tiers: fast=`claude-haiku-4-5`, mid=`claude-sonnet-4-6`, deep=`claude-opus-4-8`).
+All agents resolve to `.claude/agents/<name>.md`. Model column is the `modelFor(phase)` argument actually passed at the call site (tiers: fast=`claude-haiku-4-5`, mid=`claude-sonnet-4-6`, deep=`claude-sonnet-4-6`).
 
 | Agent | Phase / call site | Role | Model |
 |-------|-------------------|------|-------|

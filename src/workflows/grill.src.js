@@ -12,13 +12,13 @@ phase('Grill');
 let transcript = [];
 for (let i = 1; i <= maxIterations; i++) {
   const round = await agent(
-    `Grill the design/impl (round ${i}/${maxIterations}). For each claim ask 3 rounds of ` +
+    `${postureFor('grill', a)}\n\nGrill the design/impl (round ${i}/${maxIterations}). For each claim ask 3 rounds of ` +
     `"why"/"how do you know"; hunt failure modes, unstated assumptions. Prior: ${JSON.stringify(transcript)}`,
     { label: `griller:${i}`, phase: 'Grill', agentType: 'griller', model: modelFor('grill', a) });
   transcript.push(round);
 }
 const decision = await agent(
-  `As decider, synthesize the griller transcript into structured challenges[] ` +
+  `${postureFor('grade', a)}\n\nAs decider, synthesize the griller transcript into structured challenges[] ` +
   `(target, question, why_it_matters, evidence_required, resolution). Transcript: ${JSON.stringify(transcript)}`,
   { label: 'decider', phase: 'Grill', agentType: 'decider', model: modelFor('grade', a) });
 return { mode, maxIterations, decision };

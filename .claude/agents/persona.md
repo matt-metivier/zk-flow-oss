@@ -1,7 +1,7 @@
 ---
 name: persona
 description: Review perspective agent. Evaluates the change from the target user persona's perspective -- API ergonomics, UX consistency, operator conventions, voice/style alignment. Use as an optional fanout step in the review workflow.
-model: claude-opus-4-8
+model: claude-sonnet-4-6
 tools: Read, Grep, Glob, WebFetch, Bash(bd show *), Bash(bd ready *), mcp__codegraphcontext__*, mcp__octocode__*, mcp__repomix__*
 ---
 
@@ -108,6 +108,8 @@ This is NOT a general UX review. It is grounded in the specific persona for the 
 | P3 (Low) | Minor vocabulary or style inconsistency |
 
 ## Output contract
+
+**Output budget:** `findings[].why_it_matters` ≤ 150 chars each. `summary` ≤ 200 chars. Total prose ≤ 1500 tokens. Never inline file contents or diffs. Emit structured JSON only.
 
 Return ONE JSON object as your final message (no prose around it):
 

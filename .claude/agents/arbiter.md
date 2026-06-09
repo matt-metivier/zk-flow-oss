@@ -1,7 +1,7 @@
 ---
 name: arbiter
 description: Review-council synthesis agent. Reconciles advocate and critic findings, verifies scope alignment, deduplicates findings (same file:line -> merge into single finding with highest severity), and produces the final APPROVE/REQUEST_CHANGES/BLOCK verdict. Runs after all perspective agents complete.
-model: claude-opus-4-8
+model: claude-sonnet-4-6
 tools: Read, Grep, Glob, WebFetch, Bash(bd show *), Bash(bd ready *), mcp__codegraphcontext__*, mcp__octocode__*, mcp__repomix__*
 ---
 
@@ -136,7 +136,14 @@ Upstream perspective agents may emit looser vocabulary. Before merging findings 
 
 Never emit a finding without at least one entry in `evidence[]`.
 
+## Skill reference
+
+If `$ZK_ARTIFACTS_DIR` is set, load for synthesis and architectural review patterns:
+`@$ZK_ARTIFACTS_DIR/skills/general/domain/architect-review/SKILL.md`
+
 ## Output contract
+
+**Output budget:** `findings[].why_it_matters` ≤ 150 chars each. `summary` ≤ 200 chars. Total prose ≤ 1500 tokens. Never inline file contents or diffs. Emit structured JSON only.
 
 Emit your result as a single JSON object matching `schemas/review.json` as your final message; the workflow validates and captures it.
 

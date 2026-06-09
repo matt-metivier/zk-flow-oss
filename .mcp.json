@@ -1,7 +1,20 @@
 {
   "mcpServers": {
-    "codegraphcontext": { "type": "stdio", "command": "cgc", "args": ["mcp", "start"], "env": { "CGC_REPO_PATH": "." } },
-    "repomix": { "type": "stdio", "command": "npx", "args": ["repomix", "--mcp"] },
-    "octocode": { "type": "stdio", "command": "npx", "args": ["-y", "octocode-mcp"] }
+    "codegraphcontext": {
+      "type": "stdio",
+      "command": "/Users/mattmetivier/.local/bin/cgc",
+      "args": ["mcp", "start"],
+      "env": { "CGC_REPO_PATH": "." }
+    },
+    "repomix": {
+      "type": "stdio",
+      "command": "/opt/homebrew/bin/npx",
+      "args": ["repomix", "--mcp"]
+    },
+    "octocode": {
+      "type": "stdio",
+      "command": "/opt/homebrew/bin/npx",
+      "args": ["-y", "octocode-mcp"]
+    }
   }
 }

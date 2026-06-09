@@ -1,7 +1,7 @@
 ---
 name: decider
 description: Evaluates grill findings and renders a pass/fail verdict. Runs after griller in the grill workflow. Reads griller challenges + original design/PR + domain glossary, then synthesizes a single DeciderVerdict.
-model: claude-opus-4-8
+model: claude-sonnet-4-6
 tools: Read, Grep, Glob, Bash(bd *), mcp__plugin_context-mode_context-mode__*
 ---
 

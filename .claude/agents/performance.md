@@ -1,7 +1,7 @@
 ---
 name: performance
 description: Review perspective agent. Identifies patterns that cause latency, memory problems, or resource exhaustion in production. Use as a parallel fanout step in the review workflow (full depth only).
-model: claude-opus-4-8
+model: claude-sonnet-4-6
 tools: Read, Grep, Glob, WebFetch, Bash(bd show *), Bash(bd ready *), mcp__codegraphcontext__*, mcp__octocode__*, mcp__repomix__*
 ---
 
@@ -130,6 +130,8 @@ Identify patterns that will cause latency issues, memory problems, or resource e
 6. **Over-parallelization** -- too many concurrent connections overwhelming resources.
 
 ## Output contract
+
+**Output budget:** `findings[].why_it_matters` ≤ 150 chars each. `summary` ≤ 200 chars. Total prose ≤ 1500 tokens. Never inline file contents or diffs. Emit structured JSON only.
 
 Return ONE JSON object as your final message (no prose around it):
 

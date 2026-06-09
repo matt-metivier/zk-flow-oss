@@ -102,7 +102,7 @@ resolved by `modelFor(phase, a)`.
 |------|----------|-----|
 | `fast` | `claude-haiku-4-5-20251001` | ci-watch, persist/handoff, simple echoes |
 | `mid` | `claude-sonnet-4-6` | discover, research, review perspectives, testing |
-| `deep` | `claude-opus-4-8` | design, synthesis (arbiter/grader) |
+| `deep` | `claude-sonnet-4-6` | design, synthesis (arbiter/grader) |
 
 **Default tier per phase (`PHASE_TIER`):**
 | Phase | Tier | Rationale |
@@ -151,6 +151,140 @@ available for future `runCI` extension.
 | `improve` | (manual) cluster beads feedback -> propose -> verify -> grade -> stage (never auto-merge) |
 | `finish-pr` | verify PR -> load context -> impl-fix -> ci -> review -> testing (resume an open PR via pr=<url>) |
 | `dashboard` | fetch monitoring dashboard config JSON -> apply change -> verify; optional sibling delete (ops pattern, no code change) |
+
+
+---
+
+## Workflow Comparison: review vs design vs critique vs grill
+
+These four workflows look similar but serve distinct purposes:
+
+| Workflow | Input | Works on | Multi-perspective? | Output |
+|---|---|---|---|---|
+| `/review` | current git diff | **Code** — what changed in the repo | YES — 6 perspective agents in parallel | Code quality verdict + findings |
+| `/design` | task description | **Proposed work** — discover + research + design | YES — grill + 6-perspective council on the design doc | Design document → human approval seam → impl |
+| `/critique` | existing design/brief | **Design artifact** — a doc or spec you already have | YES — 6-perspective council | Design quality verdict, no impl |
+| `/grill` | design or PR | **Anything** — focused adversarial interview | NO — one griller + one decider | Adversarial verdict from single reviewer |
+
+Key distinctions:
+- `/review` is about **code correctness and quality** — always needs a diff
+- `/design` is the **full feature lifecycle's first half** — produces implementation-ready design
+- `/critique` is a **standalone design review** — useful when you have a design but no task to implement
+- `/grill` is the **sharpest, cheapest adversarial pass** — one agent stress-tests one artifact
+
+---
+
+## Phase → Agent → Schema → Rubric Map
+
+Every phase that runs through `runPhase()` uses a grader. The grader reads the rubric at runtime.
+
+| Phase | Agent(s) | Schema validated | Rubric read by grader |
+|---|---|---|---|
+| Discover | researcher | schemas/discover.json | *(none — no grader)* |
+| Research | researcher | schemas/research.json | prompts/rubrics/research-rubric.md |
+| Design | designer + devils-advocate + griller | schemas/design.json | prompts/rubrics/design-rubric.md |
+| Impl | scope-locked-editor | *(none explicit)* | prompts/rubrics/implementation-rubric.md |
+| CI | evidence-scanner | *(none)* | *(none)* |
+| Review perspectives | advocate + critic + security + performance + persona + repo-conventions + learning | schemas/review.json (arbiter output) | prompts/rubrics/review-rubric.md |
+| Testing | test-runner | schemas/testing.json | prompts/rubrics/testing-rubric.md |
+| Self-improve | reflector + proposal-verifier + grader | schemas/proposal.json | prompts/rubrics/proposal-rubric.md |
+
+**How rubrics work:** The grader agent reads `prompts/rubrics/<phase>-rubric.md` at runtime. If the file doesn't exist, grader falls back to inline criteria. The rubric file is NOT injected by the workflow JS — grader fetches it via Read tool.
+
+**How schemas work:** Inlined at build time from `schemas/*.json` via `build.js`. The `agent()` call passes `schema:` which the runtime enforces on agent output. Missing schema = build error.
+
+**How skills flow:** Researcher globs `$ZK_ARTIFACTS_DIR/skills/**/SKILL.md`, selects relevant ones into `selected_skills[]`, and the `renderSkills()` fragment injects them into downstream designer/impl prompts. If `ZK_ARTIFACTS_DIR` is unset, skill injection is skipped with a console warning.
+
+---
+
+## Fail-Fast Guards (env-check.js + guardrails.js)
+
+Workflow startup order:
+1. `requireZkArtifacts()` — ZK_ARTIFACTS_DIR set → handoff if missing
+2. `BD_PREFLIGHT_PROMPT` — bd initialized → handoff if missing
+3. `assertEvidencePresent()` — after research phase, ensure key_findings/selected_skills non-empty
+4. `assertTargetFiles()` — after design phase, ensure affirmed_files declared before impl
+5. Rubric existence: grader will warn in output if rubric is absent (runtime check, not workflow check)
+
+
+---
+
+## Component Wiring Diagram
+
+How every component connects at build time and runtime:
+
+```mermaid
+graph TD
+    subgraph "Build time (npm run build)"
+        SRC["src/workflows/*.src.js"]
+        FRAGS["src/fragments/*.js"]
+        PHASES["prompts/phases/*.md<br/>(inlined as PHASE_PROMPTS)"]
+        SCHEMAS_JSON["schemas/*.json<br/>(inlined as SCHEMAS)"]
+        BUILD["build.js<br/>assertRubricsExist()<br/>assertPerspectivePromptsExist()"]
+        BUILT[".claude/workflows/*.js"]
+        SRC --> BUILD
+        FRAGS --> BUILD
+        PHASES --> BUILD
+        SCHEMAS_JSON --> BUILD
+        BUILD --> BUILT
+    end
+
+    subgraph "Runtime (workflow execution)"
+        BUILT --> WF["Workflow JS runs"]
+        WF -->|"env-check"| ENV["ZK_ARTIFACTS_DIR check"]
+        WF -->|"env-check"| BD["bd preflight"]
+        WF -->|"loadPhasePrompt()"| PP["PHASE_PROMPTS.research<br/>PHASE_PROMPTS.implementation<br/>etc."]
+        WF -->|"agent()"| AGENT[".claude/agents/*.md"]
+        WF -->|"schema:"| SCHEMA["SCHEMAS.research etc."]
+        AGENT -->|"reads at runtime"| RUBRIC["prompts/rubrics/*.md"]
+        AGENT -->|"reads at runtime"| SKILLS["$ZK_ARTIFACTS_DIR/skills/**"]
+        AGENT -->|"reads at runtime"| PERSONA["skills/agent/machines/<alias>/persona.md"]
+        AGENT -->|"reads at runtime"| MOC["vault/Map of Contents/*.md"]
+        WF -->|"renderSkills()"| SKILL_RENDER["discovery.selected_skills → prompt"]
+        WF -->|"guardrails.js"| GUARDS["assertEvidencePresent()<br/>assertTargetFiles()"]
+    end
+
+    subgraph "Fail-fast checks"
+        BUILD -->|"throws if missing"| CHECK1["rubrics: all 7 exist"]
+        BUILD -->|"throws if missing"| CHECK2["review perspectives: all 8 exist"]
+        WF -->|"throws if missing"| CHECK3["PHASE_PROMPTS[phase]"]
+        WF -->|"throws if ZK_ARTIFACTS_DIR unset"| CHECK4["requireZkArtifacts()"]
+        WF -->|"throws if bd broken"| CHECK5["BD_PREFLIGHT_PROMPT"]
+    end
+```
+
+---
+
+## Feature Workflow: Research → Discover → Design Phase Sequence
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant W as /feature workflow
+    participant R as researcher agent
+    participant D as designer agent
+    participant G as grader agent
+
+    U->>W: /feature "add OAuth"
+    W->>W: requireZkArtifacts() + bd preflight
+    W->>R: loadPhasePrompt('research') + task
+    R->>R: investigate codebase, vault, related beads
+    R-->>W: research output {key_findings, synthesis, selected_skills}
+    W->>W: assertEvidencePresent(research)
+    W->>R: buildPersonaSection() + research summary + Map of Contents check
+    R->>R: load persona, check Map of Contents, select skills/vault
+    R-->>W: discover output {selected_skills, vault_paths, related_beads}
+    W->>W: renderSkills(discovery.selected_skills)
+    W->>D: loadPhasePrompt('design') + research + discovery + skillsBlock
+    D->>D: draft SQCA design
+    D-->>W: design output
+    W->>W: assertTargetFiles(design)
+    W->>G: grade design vs prompts/rubrics/design-rubric.md
+    G-->>W: APPROVE / REQUEST_CHANGES / BLOCK
+    W->>U: handoff doc → await human approval
+    U->>W: /feature startAt=impl bead=<id>
+    W->>R: loadPhasePrompt('implementation') + design + research + skillsBlock
+```
 
 ## Per-workflow reference docs
 Each workflow has a dedicated doc (command + args, agents, schemas, fragments, skills/prompts,

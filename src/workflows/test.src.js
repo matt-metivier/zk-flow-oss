@@ -1,5 +1,5 @@
 // src/workflows/test.src.js
-// @@USE: run-phase,handoff,budgets,schemas,args,bd-memory,bead-run,model-tiers
+// @@USE: run-phase,handoff,budgets,schemas,args,bd-memory,bead-run,model-tiers,env-check
 export const meta = {
   name: 'test',
   description: 'Standalone test strategy workflow: test-research -> test-design -> run. Use against an existing feature or PR to produce and execute a concrete test plan.',
@@ -8,6 +8,15 @@ export const meta = {
 // @@FRAGMENTS@@
 
 const a = readArgs(args);
+
+// Guard: bd must be initialized (run: bd init in this directory if not)
+const _bdPreflight = await agent(BD_PREFLIGHT_PROMPT, { label: 'preflight:bd', agentType: 'researcher', model: MODEL_TIERS.fast });
+if (!_bdPreflight || _bdPreflight.ok === false) {
+  const _bdReason = (_bdPreflight && _bdPreflight.reason) || 'bd not initialized — run: cd ~/dev/zk-flow && bd init';
+  await agent(handoffPrompt(_bdReason, 'Run: cd ~/dev/zk-flow && bd init, then retry.'), { label: 'handoff:bd-missing', agentType: 'researcher', model: MODEL_TIERS.fast });
+  return { verdict: 'needs_human', phase: 'bd-preflight' };
+}
+
 const targetEnv = a.targetEnv || 'local';
 const beadId = runBeadId(a);
 
@@ -19,6 +28,7 @@ const testResearch = await runPhase({
   agentType: 'researcher',
   label: 'test-research',
   maxIterations: PHASE_BUDGETS.research,
+  posture: postureFor('research', a),
   gradePrompt: (out) => `Grade this test research for scenario coverage, fixture completeness, and env constraint accuracy: ${JSON.stringify(out)}`,
 });
 if (!testResearch.ok) {
@@ -35,6 +45,7 @@ const testDesign = await runPhase({
   agentType: 'designer',
   label: 'test-design',
   maxIterations: PHASE_BUDGETS.design,
+  posture: postureFor('design', a),
   gradePrompt: (out) => `Grade this test plan for concreteness, coverage breadth, and executability in ${targetEnv}: ${JSON.stringify(out)}`,
 });
 if (!testDesign.ok) {
@@ -51,6 +62,7 @@ const run = await runPhase({
   agentType: 'test-runner',
   label: 'run',
   maxIterations: PHASE_BUDGETS.testing,
+  posture: postureFor('testing', a),
   gradePrompt: (out) => `Grade this test execution against the testing rubric for coverage, evidence quality, and pass/fail clarity: ${JSON.stringify(out)}`,
 });
 if (!run.ok) {

@@ -119,7 +119,7 @@ All agent names below are confirmed present under `.claude/agents/`. Model tier 
 | `arbiter` | Review council synthesis | Merges duplicate findings, emits the council's `review.json` verdict | grade=`deep` |
 | `test-runner` | Testing | Writes and runs tests, verifies changes work in `targetEnv` | testing=`mid` |
 
-Tier ids: `fast`=`claude-haiku-4-5-20251001`, `mid`=`claude-sonnet-4-6`, `deep`=`claude-opus-4-8`.
+Tier ids: `fast`=`claude-haiku-4-5-20251001`, `mid`=`claude-sonnet-4-6`, `deep`=`claude-sonnet-4-6`.
 
 ## Schemas
 

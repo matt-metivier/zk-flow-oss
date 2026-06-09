@@ -14,14 +14,14 @@ const criteria = criteriaForDepth(depth);
 
 phase('Perspectives');
 const findings = await parallel(perspectives.map(p => () =>
-  agent(`Review the current diff from the "${p}" perspective. Evaluate ONLY these criteria ` +
+  agent(`${postureFor('review', a)}\n\nReview the current diff from the "${p}" perspective. Evaluate ONLY these criteria ` +
         `(and shallower): ${criteria.join(', ')}. Return findings with severity P0-P3, file, line, why_it_matters.`,
         { label: `review:${p}`, phase: 'Perspectives', agentType: p, model: modelFor('review', a) })
 ));
 
 phase('Synthesis');
 const synthesis = await agent(
-  `You are the arbiter. Merge duplicate findings (same line -> highest severity). ` +
+  `${postureFor('grade', a)}\n\nYou are the arbiter. Merge duplicate findings (same line -> highest severity). ` +
   `Synthesize these perspective outputs into a single verdict using the review rubric (depth=${depth}). ` +
   `Findings:\n${JSON.stringify(findings.filter(Boolean))}`,
   { label: 'arbiter', phase: 'Synthesis', agentType: 'arbiter', schema: SCHEMAS.review, model: modelFor('grade', a) });

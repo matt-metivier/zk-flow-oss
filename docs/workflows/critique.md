@@ -61,11 +61,11 @@ Note: there is no separate handoff step or enforced circuit breaker in this work
 
 ## Agents
 
-All five spawned agent definitions declare `model: claude-opus-4-8` in their frontmatter, but the workflow overrides the model per `agent()` call via `modelFor(phase, a)`. The effective tier below is what this workflow actually requests.
+All five spawned agent definitions declare `model: claude-sonnet-4-6` in their frontmatter, but the workflow overrides the model per `agent()` call via `modelFor(phase, a)`. The effective tier below is what this workflow actually requests.
 
 | Agent | Phase | Role | Effective model (modelFor) |
 |---|---|---|---|
-| `designer` | Draft, Adversarial (response), Council (revision) | Produces/revises the SQCA design document. | `design` -> deep (`claude-opus-4-8`) |
+| `designer` | Draft, Adversarial (response), Council (revision) | Produces/revises the SQCA design document. | `design` -> deep (`claude-sonnet-4-6`) |
 | `devils-advocate` | Adversarial | Fastest single-perspective stress test of the design. | `grill` -> mid (`claude-sonnet-4-6`) |
 | `griller` | Adversarial | One-shot grill, emits `challenges[]`. | `grill` -> mid (`claude-sonnet-4-6`) |
 | `advocate` | Council | Perspective: finds strengths/positive patterns; counterbalances critic. | `review` -> mid (`claude-sonnet-4-6`) |
@@ -73,7 +73,7 @@ All five spawned agent definitions declare `model: claude-opus-4-8` in their fro
 | `security` | Council | Perspective: vulnerabilities, unsafe patterns, attack vectors. | `review` -> mid (`claude-sonnet-4-6`) |
 | `performance` | Council | Perspective: latency/memory/resource-exhaustion patterns. | `review` -> mid (`claude-sonnet-4-6`) |
 | `learning` | Council | Perspective: extracts reusable knowledge/conventions for the skill system. | `review` -> mid (`claude-sonnet-4-6`) |
-| `grader` | Council | Synthesizes the per-iteration verdict (APPROVE/REQUEST_CHANGES/BLOCK) as a ReviewOutput. | `grade` -> deep (`claude-opus-4-8`) |
+| `grader` | Council | Synthesizes the per-iteration verdict (APPROVE/REQUEST_CHANGES/BLOCK) as a ReviewOutput. | `grade` -> deep (`claude-sonnet-4-6`) |
 
 The five council perspectives come from `DEFAULT_PERSPECTIVES` in the `depth-map` fragment. this workflow does NOT spawn `arbiter` (the 6-perspective set mentioned in grader.md does not apply here). All eight agent files were confirmed present under `.claude/agents/`.
 
