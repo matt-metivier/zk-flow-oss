@@ -151,6 +151,7 @@ available for future `runCI` extension.
 | `improve` | (manual) cluster beads feedback -> propose -> verify -> grade -> stage (never auto-merge) |
 | `finish-pr` | verify PR -> load context -> impl-fix -> ci -> review -> testing (resume an open PR via pr=<url>) |
 | `dashboard` | fetch monitoring dashboard config JSON -> apply change -> verify; optional sibling delete (ops pattern, no code change) |
+| `investigate` | production incident: gather observability signals -> map topology -> past incident lookup -> hypotheses -> propose mitigations. Never auto-executes. |
 
 
 ---
