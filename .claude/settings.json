@@ -1,24 +1,14 @@
 {
   "hooks": {
     "PostToolUse": [
-      {
-        "hooks": [{"command": "cgc index 2>/dev/null || true","if": "Bash(git commit*)","type": "command"}],
-        "matcher": "Bash"
-      },
-      {
-        "hooks": [{"command": "cgc index 2>/dev/null || true","type": "command"}],
-        "matcher": "Edit|Write"
-      }
+      {"hooks": [{"command": "cgc index 2>/dev/null || true","if": "Bash(git commit*)","type": "command"}],"matcher": "Bash"},
+      {"hooks": [{"command": "cgc index 2>/dev/null || true","type": "command"}],"matcher": "Edit|Write"},
+      {"hooks": [{"type": "prompt","prompt": "Bash output >20 lines or >500 chars: pipe through ctx_execute immediately."}],"matcher": "Bash"},
+      {"hooks": [{"type": "prompt","prompt": "Large MCP output: use ctx_execute or ctx_batch_execute."}],"matcher": "mcp__"}
     ],
     "PreToolUse": [
-      {
-        "hooks": [{"prompt": "If target is source code, prefer MCP: Octocode LSP for definition/references, CodeGraphContext for callers/blast-radius, Repomix for directory overviews.","type": "prompt"}],
-        "matcher": "Read|Grep|Glob"
-      },
-      {
-        "hooks": [{"prompt": "If the Read request targets a directory overview question, use Repomix MCP. For single-file reads, allow normally.","type": "prompt"}],
-        "matcher": "Read"
-      }
+      {"hooks": [{"prompt": "Source code: prefer Octocode (def/refs), CodeGraphContext (callers), Repomix (dir overview). Allow Read/Grep for non-code.","type": "prompt"}],"matcher": "Read|Grep|Glob"},
+      {"hooks": [{"prompt": "Directory overview: use Repomix. Single-file reads: allow normally.","type": "prompt"}],"matcher": "Read"}
     ]
   }
 }

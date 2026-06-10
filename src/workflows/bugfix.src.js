@@ -103,4 +103,5 @@ if (!testing.ok) {
 await persistPhase(beadId, 'Testing', testing.out);
 await agent(`Persist GraderFeedback for improve. Run EXACTLY this shell, then report done:\n\`\`\`\n${bdWrite('improve', 'GraderFeedback', { phase: 'testing', verdict: 'APPROVE', findings: testing.out })}\n\`\`\``, { label: 'persist:graderfeedback:testing', agentType: 'researcher', model: modelFor('persist', a) });
 
+await persistSolution((a._ ? a._.join(' ') : 'bugfix'), research.out && research.out.synthesis, { request: a._ ? a._.join(' ') : '', beadId });
 return { verdict: 'APPROVE', route: 'done', impl: implResult.out, testing: testing.out };

@@ -2,18 +2,18 @@
   "mcpServers": {
     "codegraphcontext": {
       "type": "stdio",
-      "command": "/Users/mattmetivier/.local/bin/cgc",
+      "command": "/Users/matt.metivier/.local/bin/cgc",
       "args": ["mcp", "start"],
       "env": { "CGC_REPO_PATH": "." }
     },
     "repomix": {
       "type": "stdio",
-      "command": "/opt/homebrew/bin/npx",
+      "command": "npx",
       "args": ["repomix", "--mcp"]
     },
     "octocode": {
       "type": "stdio",
-      "command": "/opt/homebrew/bin/npx",
+      "command": "npx",
       "args": ["-y", "octocode-mcp"]
     }
   }

@@ -78,4 +78,5 @@ if (!testResult.ok) {
 }
 await persistPhase(beadId, 'Test', testResult.out);
 
+await persistSolution((a.brief || (a._ ? a._.join(' ') : 'debug')), rootCause.out && rootCause.out.synthesis, { request: a.brief || '', beadId });
 return { verdict: 'APPROVE', bead: beadId };

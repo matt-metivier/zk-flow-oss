@@ -12,7 +12,14 @@ Select skills, vault paths, and related beads for downstream phases. Uses resear
 2. **Load repo skill** — check `$ZK_ARTIFACTS_DIR/skills/agent/machines/$ALIAS/repos/$REPO/SKILL.md` (repo name from `git remote get-url origin`).
 3. **Check Map of Contents** — `ls "$ZK_ARTIFACTS_DIR/vault/Map of Contents/"` → read the KB file matching the task domain (e.g. "Nebius Knowledge Base.md"). Cite it in `vault_paths[]`.
 4. **Select skills** — glob `$ZK_ARTIFACTS_DIR/skills/**/SKILL.md`, filter by relevance to research findings. Prefer skills the research actually referenced.
-5. **Find related beads** — `bd list` for prior similar work. Cite matching bead IDs in `related_beads[]`.
+5. **Find related beads** — query bd programmatically:
+```bash
+# List all beads, search for related by keyword from task description
+bd ready --json 2>/dev/null | jq -r '.[].id' 2>/dev/null | head -20 || true
+# Also check vault/Solutions for prior patterns
+ls "$ZK_ARTIFACTS_DIR/vault/Solutions/" 2>/dev/null | grep -i "<keyword>" | head -10 || true
+```
+Cite matching bead IDs in `related_beads[]`. Cite matching vault paths in `vault_paths[]`.
 
 ## Validation before emitting
 

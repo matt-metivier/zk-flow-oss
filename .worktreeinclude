@@ -1,0 +1,5 @@
+# Files copied into each worktree (gitignored files that sessions need)
+.env
+.env.local
+.env.development
+.beads/

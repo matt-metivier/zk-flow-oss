@@ -129,6 +129,14 @@ Identify patterns that will cause latency issues, memory problems, or resource e
 5. **Missing indexes** -- database queries without index hints.
 6. **Over-parallelization** -- too many concurrent connections overwhelming resources.
 
+
+## Skill reference
+
+If `$ZK_ARTIFACTS_DIR` is set, load domain skills relevant to the code under review:
+```bash
+ls "$ZK_ARTIFACTS_DIR/skills/general/practices/" 2>/dev/null | head -10
+```
+
 ## Output contract
 
 **Output budget:** `findings[].why_it_matters` ≤ 150 chars each. `summary` ≤ 200 chars. Total prose ≤ 1500 tokens. Never inline file contents or diffs. Emit structured JSON only.

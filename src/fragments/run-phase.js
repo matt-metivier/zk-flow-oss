@@ -25,10 +25,12 @@ export async function runPhase({ phasePrompt, phaseSchema, agentType, label, max
     if (beadId && grade) {
       await agent(
         `Persist GraderFeedback. Run EXACTLY this shell, then report done:\n\`\`\`\n${bdWrite(beadId, 'GraderFeedback', { phase, iteration: i, verdict: grade.verdict, weighted_score: grade.weighted_score, findings: (grade.findings || []).slice(0, 5) })}\n\`\`\``,
-        { label: `persist:graderfeedback:${phase}:${i}`, agentType: 'researcher', model: MODEL_TIERS.fast }
+        { label: `persist:graderfeedback:${phase}:${i}`, agentType: 'persist', model: MODEL_TIERS.fast }
       );
     }
 
+    // Auto-guardrails: every phase, every iteration
+    assertPhaseOutput(out, phase);
     assertFindings(grade, phase);
     if (grade && grade.verdict === 'APPROVE') return { out, grade, ok: true, iterations: i };
     feedback = JSON.stringify((grade && grade.findings) || grade || {});

@@ -32,7 +32,15 @@ export async function renderSkills(selectedSkills, modelTier) {
       return `\n\n## Selected Skills (loaded by researcher)\n\n${result.skills_content}`;
     }
   } catch (e) {
-    console.warn(`[skill-render] Failed to render skills: ${e.message}. Proceeding without skill context.`);
+    const dir = process.env.ZK_ARTIFACTS_DIR;
+    if (dir && selectedSkills && selectedSkills.length > 0) {
+      throw new Error(
+        `[skill-render] Failed to render ${selectedSkills.length} selected skills: ${e.message}. ` +
+        'ZK_ARTIFACTS_DIR is set but skills could not be loaded. ' +
+        'Check that skill paths are valid relative paths under $ZK_ARTIFACTS_DIR/skills/.'
+      );
+    }
+    console.warn(`[skill-render] Failed to render skills (ZK_ARTIFACTS_DIR unset): ${e.message}`);
   }
   return '';
 }
