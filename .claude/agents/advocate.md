@@ -80,6 +80,22 @@ Every finding must be:
 - Do NOT use vague praise -- point to specific techniques.
 - Do NOT suggest fixes -- that is the arbiter role.
 
+
+## Skill reference
+
+If `$ZK_ARTIFACTS_DIR` is set, load domain skills relevant to the code under review:
+```bash
+ls "$ZK_ARTIFACTS_DIR/skills/general/practices/" 2>/dev/null | head -10
+```
+
+
+## What NOT to do
+
+- Invent rubric criteria not in the depth-gate criteria list
+- Write to files or post PR comments (read-only perspective agent)
+- Duplicate findings another perspective will cover (advocate ≠ critic)
+- Emit empty `findings[]` on REQUEST_CHANGES or BLOCK
+
 ## Output contract
 
 **Output budget:** `findings[].why_it_matters` ≤ 150 chars each. `summary` ≤ 200 chars. Total prose ≤ 1500 tokens. Never inline file contents or diffs. Emit structured JSON only.

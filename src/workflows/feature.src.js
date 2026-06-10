@@ -234,7 +234,7 @@ for (let ri = 1; ri <= PHASE_BUDGETS.council; ri++) {
 }
 } // end if (!skipReview)
 await persistPhase(beadId, 'ReviewGrade', reviewGrade);
-await agent(`Persist GraderFeedback for improve. Run EXACTLY this shell, then report done:\n\`\`\`\n${bdWrite('improve', 'GraderFeedback', { phase: 'review', verdict: (reviewGrade && reviewGrade.verdict) || 'BLOCK', findings: reviewGrade })}\n\`\`\``, { label: 'persist:graderfeedback:review', agentType: 'researcher', model: modelFor('persist', a) });
+await agent(`Persist GraderFeedback for improve. Run EXACTLY this shell, then report done:\n\`\`\`\n${bdWrite(beadId, 'GraderFeedback', { phase: 'review', verdict: (reviewGrade && reviewGrade.verdict) || 'BLOCK', findings: reviewGrade })}\n\`\`\``, { label: 'persist:graderfeedback:review', agentType: 'researcher', model: modelFor('persist', a) });
 if (reviewRoute !== 'done') {
   await agent(handoffPrompt('review did not pass', 'investigate review findings manually'), { agentType: 'pr-author', label: 'handoff:review', model: modelFor('persist', a) });
   return { verdict: 'needs_human', phase: 'review' };
@@ -260,4 +260,10 @@ if (!testing.ok) {
 }
 await persistPhase(beadId, 'Testing', testing.out);
 
+// Auto-write to vault/Solutions so future discover finds this pattern
+await persistSolution(
+  (a._ ? a._.join(' ') : 'feature'),
+  research.out && research.out.synthesis,
+  { request: a._ ? a._.join(' ') : a.brief || '', beadId, files: (design && design.affirmed_files) || [] }
+);
 return { verdict: 'APPROVE', route: 'done', impl: implResult.out, review: (reviewGrade && reviewGrade.verdict) || 'BLOCK', testing: testing.out };

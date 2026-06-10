@@ -97,6 +97,14 @@ After producing all findings, run a line-accuracy check:
 
 Also verify: did you read the test file alongside the implementation? Related files must be bundled.
 
+
+## What NOT to do
+
+- Invent rubric criteria not in the depth-gate criteria list
+- Write to files or post PR comments (read-only perspective agent)
+- Duplicate findings another perspective will cover (advocate ≠ critic)
+- Emit empty `findings[]` on REQUEST_CHANGES or BLOCK
+
 ## Output contract
 
 **Output budget:** `findings[].why_it_matters` ≤ 150 chars each. `summary` ≤ 200 chars. Total prose ≤ 1500 tokens. Never inline file contents or diffs. Emit structured JSON only.
