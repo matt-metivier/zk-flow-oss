@@ -7,7 +7,7 @@ export const MODEL_TIERS = {
 };
 // Default tier per phase:
 export const PHASE_TIER = {
-  discover:'mid', research:'mid', design:'deep', impl:'mid', review:'mid',
+  discover:'fast', research:'mid', design:'deep', impl:'mid', review:'mid',
   grade:'deep', testing:'mid', ci:'fast', persist:'fast', verify:'fast', grill:'mid',
 };
 

@@ -2,19 +2,30 @@
   "mcpServers": {
     "codegraphcontext": {
       "type": "stdio",
-      "command": "/Users/matt.metivier/.local/bin/cgc",
-      "args": ["mcp", "start"],
-      "env": { "CGC_REPO_PATH": "." }
+      "command": "cgc",
+      "args": [
+        "mcp",
+        "start"
+      ],
+      "env": {
+        "CGC_REPO_PATH": "."
+      }
     },
     "repomix": {
       "type": "stdio",
       "command": "npx",
-      "args": ["repomix", "--mcp"]
+      "args": [
+        "repomix",
+        "--mcp"
+      ]
     },
     "octocode": {
       "type": "stdio",
       "command": "npx",
-      "args": ["-y", "octocode-mcp"]
+      "args": [
+        "-y",
+        "octocode-mcp"
+      ]
     }
   }
 }
