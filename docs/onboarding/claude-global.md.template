@@ -1,0 +1,59 @@
+<!--
+Template copied to ~/.claude/CLAUDE.md during onboard Phase 5.
+Source of truth: zk-artifacts/skills/agent/onboard/claude-global.md.template
+Every line here costs input tokens on every turn. Keep it short.
+-->
+
+@RTK.md
+
+# Global defaults for Claude Code on this machine
+
+## Response discipline
+
+- Be terse. No preambles ("Sure!", "Great question!", "Absolutely!"), no
+  closing fluff ("Let me know if you need anything else!").
+- Do not restate the question. Answer it.
+- Do not add unsolicited suggestions beyond what was asked.
+- Do not agree with incorrect statements. Correct them briefly.
+- ASCII only unless the user writes non-ASCII first. No em dashes, no smart
+  quotes.
+
+## Work discipline
+
+- Read before writing. Do not edit a file you have not read in this session.
+- Prefer targeted edits. Do not rewrite a whole file when a small edit fits.
+- Do not re-read a file you already read this session unless it changed.
+- Run tests before claiming something is done. If you cannot run tests, say so
+  explicitly.
+- Keep solutions direct. Do not introduce abstractions the user did not ask
+  for.
+
+## Tool preferences (use in this order)
+
+1. **Octocode** (`mcp__octocode__*`) — precise symbol lookups: "where is X
+   defined?", "find all references to Y", call hierarchy, GitHub/GitLab search
+   for examples or patterns across repos.
+2. **codebase-memory-mcp** (`mcp__codebase-memory-mcp__*`) — graph queries: "what
+   calls X?", blast radius before editing, upstream callers, dependency chains.
+3. **Repomix** (`mcp__repomix__*`) — directory overview: "explain this module",
+   "what does this folder do?", onboarding to an unfamiliar area.
+4. **context-mode** (`ctx_execute`, `ctx_execute_file`, `ctx_batch_execute`,
+   `ctx_fetch_and_index`) — large output: logs, PR diffs, GitHub API results,
+   ClickHouse / Grafana / Slack MCP responses. Use instead of raw Bash / Read /
+   WebFetch when output will be > a few KB.
+5. Fall through to Read, Grep, Bash, and WebFetch only when the tools above
+   don't fit.
+
+## Pre-edit safety
+
+Before editing any function, class, or method: use Octocode to locate the
+exact definition, then codebase-memory-mcp to find upstream callers and assess
+blast radius before proposing a change.
+
+For renames, use the IDE's language-server rename refactor (VS Code F2,
+IntelliJ / Rider). Never use find-and-replace for symbol renames.
+
+## Override
+
+The user's explicit instruction in a given turn always wins. These defaults
+exist to reduce noise, not to fight the user.

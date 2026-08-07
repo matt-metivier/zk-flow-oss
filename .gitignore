@@ -1,0 +1,14 @@
+graphify-out/
+.claude/workflows/
+
+# Beads / Dolt files (added by bd init)
+.dolt/
+*.db
+.beads-credential-key
+
+# bd runtime state — ignore all except passive export
+.beads/
+!.beads/issues.jsonl
+
+# machine-specific goal runs (goalbuddy workspace)
+docs/goals/

@@ -1,0 +1,83 @@
+// src/workflows/critique.src.js
+// @@USE: depth-map,verdict,budgets,schemas,args,model-tiers,bd-memory,bead-run,operating-posture,skill-render,env-check,handoff,context-pack
+export const meta = { name: 'critique', description: 'Design with adversarial pass + review council', phases: [{title:'Draft'},{title:'Adversarial'},{title:'Council'}] };
+// @@FRAGMENTS@@
+
+const a = readArgs(args);                        // Task 0: args arrive as text
+
+// Adapted from uditakhourii/adhd (MIT): optional wide ideation pre-pass to reduce anchoring bias.
+const IDEATION_FRAMES = ['minimal','radical','invert-the-constraint','borrow-from-another-domain','first-principles'];
+let ideationNote = '';
+if (a.ideate === 'true' || a.ideate === true) {
+  const nFrames = Number(a.frames) || 5;
+  const topK = Number(a.topK) || 3;
+  const ideaAgents = Array.from({ length: nFrames }, (_, i) => {
+    const frame = IDEATION_FRAMES[i % IDEATION_FRAMES.length];
+    return () => agent(
+      `${postureFor('design', a)}\n\nYou are a divergent idea generator. Frame: "${frame}". Problem: ${a.brief || '(no brief)'}. Generate ONE distinct design direction using this frame. DIVERGE only — no evaluation, no anchoring on prior ideas. Output a short idea sketch (2-5 sentences).`,
+      { label:`ideation:${frame}`, phase:'Draft', agentType:'designer', model: modelFor('design', a) }
+    );
+  });
+  const ideas = await parallel(ideaAgents);
+  const ideasText = ideas.map(function(x, i) { return '[' + (i + 1) + '] ' + JSON.stringify(x); }).join('\n');
+  const shortlist = await agent(
+    postureFor('grade', a) + '\n\nYou are an arbiter. Score these ' + nFrames + ' design ideas on novelty, viability, and fit. Flag traps. Cluster by angle. Select the top ' + topK + ' and emit a concise shortlist (one bullet per idea).\nIdeas:\n' + ideasText,
+    { label:'ideation:critic', phase:'Draft', agentType:'grader', model: modelFor('grade', a) }
+  )
+  ideationNote = 'Consider these vetted directions:\n' + JSON.stringify(shortlist) + '\n';
+}
+
+// /critique has no discover phase: the designer drafted with no domain skills at all.
+const skillsBlock = await selectAndRenderSkills(a.brief || (a._ ? a._.join(' ') : ''), null, modelFor('discover', a));
+
+// Durable context: machine persona + prior beads + vault MOC (no discover phase here).
+const ctxBlock = await contextPack(a.brief || (a._ ? a._.join(' ') : ''), (a.brief || 'design'), modelFor('discover', a));
+
+// bd preflight: this workflow persists GraderFeedback, and bdWrite against an
+// uninitialized bd fails silently — /improve then sees no signal and cannot know why.
+// Non-fatal by design: the verdict is still useful without persistence, so warn and
+// skip the write rather than aborting a review that already ran.
+const _bdOk = await agent(BD_PREFLIGHT_PROMPT, { label: 'preflight:bd', agentType: 'researcher', model: MODEL_TIERS.fast });
+const _bdUsable = !!(_bdOk && _bdOk.ok !== false);
+
+phase('Draft');
+let design = await agent(`${postureFor('design', a)}\n\nDraft the SQCA design. ${ideationNote}${a.brief || ''}${skillsBlock}${ctxBlock}`, { label:'designer', phase:'Draft', agentType:'designer', schema: SCHEMAS.design, model: modelFor('design', a) });
+
+phase('Adversarial');
+const [devil, grillOut] = await parallel([
+  () => agent(`${postureFor('grill', a)}\n\nDevil's advocate: fastest single-perspective stress test of this design: ${JSON.stringify(design)}`, { label:'devils-advocate', phase:'Adversarial', agentType:'devils-advocate', model: modelFor('grill', a) }),
+  () => agent(`${postureFor('grill', a)}\n\nGrill this design (one-shot): ${JSON.stringify(design)}. Output challenges[].`, { label:'griller', phase:'Adversarial', agentType:'griller', model: modelFor('grill', a) }),
+]);
+design = await agent(`${postureFor('design', a)}\n\nUpdate the design addressing these objections.\nDevil: ${JSON.stringify(devil)}\nGrill: ${JSON.stringify(grillOut)}\nDesign: ${JSON.stringify(design)}`, { label:'designer-response', phase:'Adversarial', agentType:'designer', schema: SCHEMAS.design, model: modelFor('design', a) });
+
+phase('Council');
+let grade, gradeOk = false;
+for (let di = 1; di <= PHASE_BUDGETS.design; di++) {
+  // Re-generate perspective fan-out inside the loop so each revision is re-reviewed
+  const persp = await parallel(validPerspectives(DEFAULT_PERSPECTIVES).map(p => () =>
+    agent(`${postureFor('review', a)}\n\nReview the design from the "${p}" perspective: ${JSON.stringify(design)}${skillsBlock}`, { label:`design:${p}:${di}`, phase:'Council', agentType:p, model: modelFor('review', a) })));
+  grade = await agent(
+    `${postureFor('grade', a)}\n\nGrader: synthesize design verdict from perspectives (iteration ${di}): ${JSON.stringify(persp.filter(Boolean))}`,
+    { label:`grader:design:${di}`, phase:'Council', agentType:'grader', schema: SCHEMAS.review, model: modelFor('grade', a) });
+  if (grade && grade.verdict === 'APPROVE') { gradeOk = true; break; }
+  if (di < PHASE_BUDGETS.design) {
+    design = await agent(
+      `${postureFor('design', a)}\n\nRevise the design to address reviewer objections. Feedback: ${JSON.stringify(grade)}. Current design: ${JSON.stringify(design)}`,
+      { label:`designer:revision:${di}`, phase:'Council', agentType:'designer', schema: SCHEMAS.design, model: modelFor('design', a) });
+  }
+}
+
+const _critiqueBeadId = runBeadId(a);
+if (_critiqueBeadId && _bdUsable) {
+  await agent(`Persist GraderFeedback. Run EXACTLY this shell:\n\`\`\`\n${bdWrite(_critiqueBeadId, 'GraderFeedback', { phase: 'critique', verdict: grade && grade.verdict, findings: (grade && (grade.findings || grade.challenges || []) || []).slice(0, 5) })}\n\`\`\``, { label: 'persist:graderfeedback:critique', agentType: 'researcher', model: MODEL_TIERS.fast });
+}
+if (!gradeOk) {
+  // Budget exhausted without an APPROVE. That is a stall, not a verdict — emit a
+  // handoff so the next session resumes from the objections instead of re-deriving them.
+  await agent(handoffPrompt(
+    `critique did not reach APPROVE within ${PHASE_BUDGETS.design} design iteration(s). Last verdict: ${(grade && grade.verdict) || 'none'}. Unresolved: ${JSON.stringify((grade && (grade.findings || grade.challenges) || []).slice(0, 5))}`,
+    `Re-run /critique with a narrowed brief, or take the design to /design (bead=${_critiqueBeadId || '<id>'}) for a full research+design pass`
+  ), { label: 'handoff:critique-budget', agentType: 'pr-author', model: modelFor('persist', a) });
+}
+
+return { design, verdict: grade ? grade.verdict : 'BLOCK', route: routeVerdict(grade ? grade.verdict : 'BLOCK'), gradeOk };

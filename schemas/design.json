@@ -1,0 +1,281 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "DesignOutput",
+  "description": "Output of the design phase: SQCA design document produced by the designer agent. Validated by the workflow before passing to scope-locked-editor.",
+  "type": "object",
+  "required": [
+    "outcome",
+    "overview",
+    "approach",
+    "test_strategy",
+    "affirmed_files"
+  ],
+  "properties": {
+    "outcome": {
+      "type": "string",
+      "const": "design_complete",
+      "description": "Must be 'design_complete' when the task succeeds"
+    },
+    "overview": {
+      "type": "string",
+      "description": "What we're building and why"
+    },
+    "approach": {
+      "type": "string",
+      "description": "How to implement"
+    },
+    "test_strategy": {
+      "type": "string",
+      "description": "How to verify"
+    },
+    "acceptance_criteria": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "criterion",
+          "testable"
+        ],
+        "properties": {
+          "criterion": {
+            "type": "string"
+          },
+          "testable": {
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    "risks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "risk",
+          "mitigation"
+        ],
+        "properties": {
+          "risk": {
+            "type": "string"
+          },
+          "mitigation": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "situation": {
+      "type": "string",
+      "description": "SQCA Situation: what exists today"
+    },
+    "question": {
+      "type": "string",
+      "description": "SQCA Question: what must change"
+    },
+    "constraints": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "SQCA Constraints: non-negotiables"
+    },
+    "candidates": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "object",
+        "required": [
+          "name",
+          "trade_offs"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "trade_offs": {
+            "type": "string"
+          },
+          "rejected_reason": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "2+ distinct approaches considered with trade-offs"
+    },
+    "chosen_approach": {
+      "type": "object",
+      "required": [
+        "name",
+        "rationale"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "rationale": {
+          "type": "string"
+        }
+      },
+      "description": "Which candidate was chosen and why"
+    },
+    "blast_radius": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "symbol",
+          "callers"
+        ],
+        "properties": {
+          "symbol": {
+            "type": "string"
+          },
+          "callers": {
+            "type": "integer"
+          },
+          "risk_level": {
+            "type": "string",
+            "enum": [
+              "low",
+              "medium",
+              "high",
+              "critical"
+            ]
+          }
+        }
+      },
+      "description": "Impact assessment for each modified symbol"
+    },
+    "affirmed_skills": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Final skill list for downstream phases"
+    },
+    "skills_added": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Skills added on top of selected_skills"
+    },
+    "skills_removed": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "skill",
+          "reason"
+        ],
+        "properties": {
+          "skill": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Skills dropped with reasons"
+    },
+    "assumptions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "statement"
+        ],
+        "properties": {
+          "statement": {
+            "type": "string"
+          },
+          "risk_if_wrong": {
+            "type": "string"
+          },
+          "verified": {
+            "type": "boolean"
+          }
+        }
+      },
+      "description": "Tagged assumptions from design process"
+    },
+    "needs_decomposition": {
+      "type": "boolean",
+      "description": "Whether the design spans multiple independent work units"
+    },
+    "subtasks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "title",
+          "synthesis"
+        ],
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "synthesis": {
+            "type": "string"
+          },
+          "agent": {
+            "type": "string"
+          },
+          "depends_on": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "acceptance_criteria": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "description": "Subtasks when decomposition is needed"
+    },
+    "grill_survival": {
+      "type": "object",
+      "properties": {
+        "verdict": {
+          "type": "string",
+          "enum": [
+            "APPROVE",
+            "REVISE",
+            "BLOCK"
+          ]
+        },
+        "objections_addressed": {
+          "type": "integer"
+        },
+        "objections_remaining": {
+          "type": "integer"
+        }
+      },
+      "description": "Whether design survived self-grilling and adversarial review"
+    },
+    "affirmed_files": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "file",
+          "change"
+        ],
+        "properties": {
+          "file": {
+            "type": "string"
+          },
+          "change": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Files the design affirms will be touched. Scope-locked-editor edits only these. Enforced by assertTargetFiles before impl."
+    }
+  }
+}

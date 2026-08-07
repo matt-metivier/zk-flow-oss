@@ -1,0 +1,96 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "TestingOutput",
+  "description": "Structured output from the testing phase (mol-testing). Emitted by the test-runner step after exercising the real feature path. See docs/architecture/feature-testing-and-ci-watcher.md.",
+  "type": "object",
+  "required": [
+    "outcome",
+    "smoke_command",
+    "smoke_exit_code",
+    "scenarios_exercised"
+  ],
+  "properties": {
+    "outcome": {
+      "type": "string",
+      "enum": [
+        "testing_complete",
+        "smoke_unsupported",
+        "testing_failed"
+      ],
+      "description": "testing_complete = smoke (or test fallback) ran and matched plan; smoke_unsupported = `make smoke` target absent, silent fallback to `make test`; testing_failed = smoke ran and failed."
+    },
+    "smoke_command": {
+      "type": "string",
+      "description": "Exact command invoked (e.g. `make smoke` or `make test`)."
+    },
+    "smoke_exit_code": {
+      "type": "integer",
+      "description": "Exit code of the smoke / fallback command."
+    },
+    "smoke_log_summary": {
+      "type": "string",
+      "description": "Short human summary of what the smoke output showed. Tail-of-log is fine."
+    },
+    "scenarios_exercised": {
+      "type": "array",
+      "description": "Concrete behaviors driven past the unit/integration layer",
+      "items": {
+        "type": "object",
+        "required": [
+          "scenario"
+        ],
+        "properties": {
+          "scenario": {
+            "type": "string",
+            "description": "What was tested"
+          },
+          "observation_method": {
+            "type": "string",
+            "description": "How the result was observed (log line, HTTP status, process exit code)"
+          },
+          "observed_result": {
+            "type": "string",
+            "description": "What actually happened"
+          },
+          "log_line": {
+            "type": "string",
+            "description": "Relevant log output or evidence"
+          }
+        }
+      }
+    },
+    "ci_url": {
+      "type": "string",
+      "description": "PR URL whose remote CI was observed by ci-watcher (optional; included if the testing phase cross-referenced CI)."
+    },
+    "fallback_used": {
+      "type": "boolean",
+      "description": "True when `make -n smoke` failed and the runner fell back to `make test`."
+    },
+    "fallback_reason": {
+      "type": "string",
+      "description": "Why fallback was used (typically: 'no `make smoke` target')."
+    },
+    "evidence_refs": {
+      "type": "array",
+      "description": "bead msg-ids of related evidence (SmokeRan, SmokeUnsupported, TestPlanResult, CiResult).",
+      "items": {
+        "type": "string"
+      }
+    },
+    "target_env": {
+      "type": "string",
+      "description": "Environment tested against (local/dev/stage/prod)",
+      "enum": [
+        "local",
+        "dev",
+        "stage",
+        "prod"
+      ]
+    },
+    "regression_tests_added": {
+      "type": "boolean",
+      "description": "Whether new regression tests were added for the scenarios exercised."
+    }
+  }
+}

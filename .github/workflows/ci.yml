@@ -1,0 +1,21 @@
+name: ci
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Run tests
+        run: npm test
+      - name: Rebuild workflows (build asserts bundle self-containment + declaration order)
+        run: node build.js
+      # NOTE: .claude/workflows/ is gitignored, so a git-diff drift check is
+      # structurally inert — the build-time assertions are the real gate.

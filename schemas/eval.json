@@ -1,0 +1,56 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ToolEval",
+  "description": "Output of the eval-tool assess+verdict phase: a single tool/repo evaluation written to the tooling-eval EVALS.md catalog. Produced by the researcher agent applying the tooling-eval rubric.",
+  "type": "object",
+  "required": [
+    "repo",
+    "license",
+    "verdict",
+    "overlaps",
+    "liftable_patterns",
+    "integration_analysis",
+    "revisit_if"
+  ],
+  "properties": {
+    "repo": {
+      "type": "string",
+      "description": "Canonical repo URL, e.g. https://github.com/owner/repo"
+    },
+    "license": {
+      "type": "string",
+      "description": "Exact SPDX id (MIT, Apache-2.0, BUSL-1.1, AGPL-3.0, NOASSERTION, ...). Flag restrictive licenses."
+    },
+    "verdict": {
+      "type": "string",
+      "enum": ["ADOPT", "INSPIRE", "REJECT"],
+      "description": "ADOPT=install/vendor; INSPIRE=lift named patterns, don't install; REJECT=neither. Restrictive license forbids ADOPT."
+    },
+    "lifecycle": {
+      "type": "string",
+      "description": "ADOPT only: 'ADOPTED YYYY-MM-DD' or 'RETIRED YYYY-MM-DD <reason>'. Else 'n/a'."
+    },
+    "overlaps": {
+      "type": "string",
+      "description": "Which existing stack tools it duplicates (codebase-memory-mcp/Octocode/Repomix/context-mode/bd/zk-flow/superpowers/GoalBuddy)."
+    },
+    "liftable_patterns": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Named, concrete patterns, each with a target file in our stack. Empty if none."
+    },
+    "integration_analysis": {
+      "type": "string",
+      "description": "How it composes with our workflows; artifact-flow and memory-model implications (does it change where artifacts live or whether bd is the right memory?). Evidence-backed, not README hype."
+    },
+    "revisit_if": {
+      "type": "string",
+      "description": "Trigger that would change the verdict. Empty string if settled."
+    },
+    "evidence": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "URLs / file paths cited."
+    }
+  }
+}

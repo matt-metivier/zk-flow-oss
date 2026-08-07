@@ -1,0 +1,20 @@
+{
+  "name": "zk-flow-marketplace",
+  "owner": {
+    "name": "matt-metivier",
+    "url": "https://github.com/matt-metivier"
+  },
+  "metadata": {
+    "description": "zk-flow: grade-gated Claude Code workflows, plus the private zkengine skills that feed them. The zk-flow entry is public; zkengine resolves to a private repo and only installs for someone with access."
+  },
+  "plugins": [
+    {
+      "name": "zk-flow",
+      "source": ".",
+      "description": "Grade-gated /workflows: research -> design -> impl -> ci -> review -> testing. Every phase is scored against a rubric before it advances.",
+      "version": "0.1.0",
+      "category": "workflow",
+      "license": "Apache-2.0"
+    }
+  ]
+}

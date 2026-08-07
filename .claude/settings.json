@@ -1,0 +1,25 @@
+{
+  "hooks": {
+    "_comment": "Engine hooks (PostToolUse, PreCompact, PreToolUse, Stop, SessionStart) moved to hooks/hooks.json and ship with the zk-flow plugin, which repoints their script paths at ${CLAUDE_PLUGIN_ROOT}. Keeping copies here would double-fire every Stop and SessionStart inside this repo once the plugin is installed. What stays is the genuinely per-machine part: the vault KB list (names this operator's MOCs) and the user-scope router at $HOME/.claude/hooks/. If you work in this repo WITHOUT the plugin installed, run scripts/onboard.sh \u2014 it installs the plugin.",
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "prompt": "Session is rooted in zk-flow. Invoke workflows via slash commands (/feature, /review, /debug, /investigate, /design, /research, /refactor, /improve, /health, /remember). Load session-guide skill ($ZK_ARTIFACTS_DIR/skills/agent/session-guide/SKILL.md) if you haven't yet. For observability work, load machine observability.md.\n\nActive Map of Contents KBs (for discover phase vault lookup): <org> KB, ClickHouse KB, Grafana KB, Temporal KB, Books. Load via $ZK_ARTIFACTS_DIR/vault/Map of Contents/<name>.md. Stale/archived: <org>, <org>, <org>, <org>, <org>, <org>.",
+            "type": "prompt"
+          }
+        ],
+        "matcher": ""
+      },
+      {
+        "hooks": [
+          {
+            "command": "$HOME/.claude/hooks/zk-flow-router.sh",
+            "type": "command"
+          }
+        ],
+        "matcher": ""
+      }
+    ]
+  }
+}

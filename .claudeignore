@@ -1,0 +1,4 @@
+node_modules/
+.claude/workflows/
+graphify-out/
+*.log

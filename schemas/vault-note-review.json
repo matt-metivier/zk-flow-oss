@@ -1,0 +1,35 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "VaultNoteReview",
+  "description": "Grader verdict on a planned set of vault note edits (/vault-sync Grade phase). Deliberately NOT review.json: that schema is shaped for code review (severity, file:line, autofix_class, owner) and its required fields do not describe a note-quality judgement, so reusing it silently stripped every rejection reason from the result.",
+  "type": "object",
+  "required": ["verdict", "findings", "summary"],
+  "additionalProperties": false,
+  "properties": {
+    "verdict": {
+      "type": "string",
+      "enum": ["APPROVE", "REQUEST_CHANGES", "BLOCK"],
+      "description": "BLOCK for a credential leak, invented behaviour, or a duplicate note. REQUEST_CHANGES for recoverable content problems. APPROVE only when the evidence, placement and secrets gates all hold."
+    },
+    "findings": {
+      "type": "array",
+      "description": "One entry per problem. MUST be non-empty when verdict is not APPROVE — a rejection with no findings tells the operator nothing.",
+      "items": {
+        "type": "object",
+        "required": ["path", "criterion", "gap"],
+        "additionalProperties": false,
+        "properties": {
+          "path": { "type": "string", "description": "The note_edits[] path this finding is about." },
+          "criterion": { "type": "string", "description": "Which numbered rubric criterion failed (e.g. '9' or '2')." },
+          "gap": { "type": "string", "maxLength": 300, "description": "What is wrong, concretely. Quote the offending text or name the note it duplicates." },
+          "fix": { "type": "string", "maxLength": 300, "description": "Optional: the smallest change that would make it pass." }
+        }
+      }
+    },
+    "summary": {
+      "type": "string",
+      "maxLength": 600,
+      "description": "One or two sentences an operator can act on without reading the findings."
+    }
+  }
+}

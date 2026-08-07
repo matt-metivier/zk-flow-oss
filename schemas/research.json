@@ -1,0 +1,160 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ResearchOutput",
+  "description": "Output of the research phase: investigation synthesis and skill selection produced by the researcher agent. Validated by the workflow before the design phase.",
+  "type": "object",
+  "required": [
+    "outcome",
+    "task_context",
+    "key_findings",
+    "evidence_quality"
+  ],
+  "properties": {
+    "outcome": {
+      "type": "string",
+      "const": "research_complete",
+      "description": "Must be 'research_complete' when the task succeeds"
+    },
+    "task_context": {
+      "type": "string",
+      "description": "What was asked and why"
+    },
+    "key_findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "finding",
+          "evidence",
+          "evidence_quality"
+        ],
+        "properties": {
+          "finding": {
+            "type": "string"
+          },
+          "evidence": {
+            "type": "string",
+            "description": "file:line or source"
+          },
+          "evidence_quality": {
+            "type": "string",
+            "enum": [
+              "strong",
+              "adequate",
+              "weak"
+            ]
+          }
+        }
+      }
+    },
+    "affected_files": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "existing_patterns": {
+      "type": "string",
+      "description": "How the codebase currently handles this"
+    },
+    "gaps": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "What's missing or broken"
+    },
+    "skills_used": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "evidence_quality": {
+      "type": "string",
+      "enum": [
+        "strong",
+        "adequate",
+        "weak"
+      ],
+      "description": "Evidence quality: strong=all claims verified, adequate=2+ sources, weak=insufficient"
+    },
+    "synthesis": {
+      "type": "string",
+      "description": "Coherent summary of research findings"
+    },
+    "selected_skills": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Skill IDs (paths under $ZK_ARTIFACTS_DIR/skills) downstream phases should load. Persisted as a SkillsSelected bead message; selected skills are rendered into downstream agent prompts by the workflow."
+    },
+    "vault_solutions_consulted": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Paths under $ZK_ARTIFACTS_DIR/vault/Solutions/ that the researcher consulted and found relevant. Empty array if none matched."
+    },
+    "tools_used": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Tools the researcher invoked during investigation (e.g. octocode, codebase-memory-mcp, repomix, context-mode, rtk). Free-form list for grader to verify tool-use discipline."
+    },
+    "assumptions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "statement"
+        ],
+        "properties": {
+          "statement": {
+            "type": "string"
+          },
+          "risk_if_wrong": {
+            "type": "string"
+          },
+          "verified": {
+            "type": "boolean"
+          }
+        }
+      },
+      "description": "Tagged assumptions from research process"
+    },
+    "search_coverage": {
+      "type": "object",
+      "required": [
+        "agent_memory",
+        "vault",
+        "meetings",
+        "codebase",
+        "live_system"
+      ],
+      "properties": {
+        "agent_memory": {
+          "type": "boolean"
+        },
+        "vault": {
+          "type": "boolean"
+        },
+        "meetings": {
+          "type": "boolean"
+        },
+        "codebase": {
+          "type": "boolean"
+        },
+        "live_system": {
+          "type": "boolean"
+        },
+        "skipped_justification": {
+          "type": "string"
+        }
+      },
+      "description": "Which of the 5 required sources were searched"
+    }
+  }
+}

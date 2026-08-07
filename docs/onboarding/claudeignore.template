@@ -1,0 +1,64 @@
+# Template copied to <repo-root>/.claudeignore during onboard Phase 5.
+# Source of truth: zk-city/skills/agent/onboard/claudeignore.template
+# Same syntax as .gitignore. Keeps Claude Code from auto-loading noise.
+
+# --- Build artifacts ---
+dist/
+build/
+target/
+out/
+.next/
+.nuxt/
+.turbo/
+coverage/
+
+# --- Dependencies ---
+node_modules/
+vendor/
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# --- Lockfiles (Claude does not need these to reason about code) ---
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+Cargo.lock
+poetry.lock
+uv.lock
+Gemfile.lock
+
+# --- Minified / generated assets ---
+*.min.js
+*.min.css
+*.map
+*.generated.*
+
+# --- Local state and secrets ---
+.env
+.env.*
+!.env.example
+!.env.template
+*.log
+logs/
+
+# --- IDE / OS cruft ---
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# --- graphify cache (keep the graph itself; drop the extraction cache) ---
+graphify-out/cache/
+
+# --- Repo-specific ignores below this line ---
+# Uncomment / add per-repo after copying:
+#
+# zk-city-artifacts (only in that repo):
+#   .beads/evidence/
+#
+# zk-city (only in that repo):
+#   bin/
+#   .beads/
