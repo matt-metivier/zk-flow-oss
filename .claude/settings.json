@@ -1,0 +1,25 @@
+{
+  "hooks": {
+    "_comment": "Engine hooks (PostToolUse, PreCompact, PreToolUse, Stop, SessionStart) do NOT belong in this file. Two ways they arrive, never both: installed from the marketplace, hooks/hooks.json ships them with the plugin, pathed at ${CLAUDE_PLUGIN_ROOT}; developing this repo, scripts/onboard.sh (phase 7b) wires them into ~/.claude/settings.json pathed at $ZK_FLOW_DIR, and uninstalls the plugin so nothing serves a stale cached copy. Adding them here on top of either would double-fire every Stop and SessionStart. What stays is the genuinely per-machine part: the vault KB list (names this operator's MOCs) and the user-scope router at $HOME/.claude/hooks/.",
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "prompt": "Session is rooted in zk-flow. Invoke workflows via slash commands (/feature, /review, /debug, /investigate, /design, /research, /refactor, /improve, /health, /remember). Load session-guide skill ($ZK_ARTIFACTS_DIR/skills/agent/session-guide/SKILL.md) if you haven't yet. For observability work, load machine observability.md.\n\nActive Map of Contents KBs (for discover phase vault lookup): <org> KB, ClickHouse KB, Grafana KB, Temporal KB, Books. Load via $ZK_ARTIFACTS_DIR/vault/Map of Contents/<name>.md. Stale/archived: <org>, <org>, <org>, <org>, <org>, <org>.",
+            "type": "prompt"
+          }
+        ],
+        "matcher": ""
+      },
+      {
+        "hooks": [
+          {
+            "command": "$HOME/.claude/hooks/zk-flow-router.sh",
+            "type": "command"
+          }
+        ],
+        "matcher": ""
+      }
+    ]
+  }
+}

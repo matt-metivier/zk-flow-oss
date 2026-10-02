@@ -1,0 +1,26 @@
+{
+  "name": "zk-flow",
+  "displayName": "zk-flow",
+  "version": "0.1.0",
+  "description": "Local, interactive Claude Code /workflows for software-engineering lifecycles: research -> design -> impl -> ci -> review -> testing, each phase grade-gated against a rubric. Self-contained, no daemon.",
+  "author": {
+    "name": "matt-metivier",
+    "url": "https://github.com/matt-metivier"
+  },
+  "homepage": "https://github.com/matt-metivier/zk-flow-oss",
+  "repository": "https://github.com/matt-metivier/zk-flow-oss",
+  "license": "Apache-2.0",
+  "keywords": [
+    "workflows",
+    "orchestration",
+    "code-review",
+    "grading",
+    "rubrics"
+  ],
+  "commands": [
+    "./.claude/commands/"
+  ],
+  "workflows": [
+    "./.claude/workflows/"
+  ]
+}

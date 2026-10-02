@@ -1,0 +1,105 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ProposalVerdictEnvelope",
+  "description": "Output of the improve workflow's Verify phase: one verdict per ActionableProposal emitted by the reflector. The envelope shape is what the workflow gates on -- without a forced schema the verifier returned prose plus a fenced JSON block, the gate read `.proposals` off a string, and eight approved proposals were discarded as no_actionable_proposals.",
+  "type": "object",
+  "required": [
+    "verdicts"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "verdicts": {
+      "type": "array",
+      "description": "One entry per proposal handed to the verifier, in the order received. An empty array means nothing survived verification.",
+      "items": {
+        "type": "object",
+        "required": [
+          "proposal_bead",
+          "verdict",
+          "reason",
+          "category",
+          "mutation_type",
+          "priority",
+          "effort",
+          "proposal"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "proposal_bead": {
+            "type": "string",
+            "description": "Bead id the proposal is anchored to (echo the evidence_beads[0] value from the proposal)."
+          },
+          "verdict": {
+            "type": "string",
+            "enum": [
+              "approved",
+              "rejected"
+            ],
+            "description": "approved = actionable and safe to stage; rejected = protected skill, insufficient evidence, non-applicable diff, or out of scope."
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 500,
+            "description": "Why this verdict. For a rejection, name the specific gate that failed."
+          },
+          "target": {
+            "type": "string",
+            "description": "Optional: file path the proposal edits, as verified to exist on disk."
+          },
+          "category": {
+            "type": "string",
+            "description": "Echo the proposal's category verbatim. The grader ranks on this and it is unverifiable when dropped."
+          },
+          "mutation_type": {
+            "type": "string",
+            "description": "Echo the proposal's mutation_type verbatim, so the category/mutation pairing stays checkable downstream."
+          },
+          "priority": {
+            "type": "string",
+            "enum": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "description": "Echo the proposal's priority. Without it the Grade phase cannot produce the ranking it is asked for."
+          },
+          "effort": {
+            "type": "string",
+            "enum": [
+              "small",
+              "medium",
+              "large"
+            ],
+            "description": "Echo the proposal's effort."
+          },
+          "target_line_range": {
+            "type": "string",
+            "description": "Line range this proposal edits, e.g. L20-L34. Required to approve two proposals that share one target file; absent, they are duplicates by rubric c4."
+          },
+          "evidence_beads": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Echo the proposal's evidence_beads so bead reality is checkable at grade time."
+          },
+          "proposal": {
+            "type": "string",
+            "maxLength": 1200,
+            "description": "Echo the proposal text verbatim: the exact change to make. Rubric criterion 6 (actionable) is defined over this field and cannot be judged when it is dropped."
+          },
+          "rationale": {
+            "type": "string",
+            "maxLength": 800,
+            "description": "Echo the proposal's rationale. Criterion 5 allows a single-evidence-bead proposal ONLY when the rationale justifies it, so omitting this field silently fails otherwise-sound single-bead proposals."
+          }
+        }
+      }
+    },
+    "notes": {
+      "type": "string",
+      "maxLength": 1000,
+      "description": "Optional cross-proposal observations that do not belong to a single verdict."
+    }
+  }
+}

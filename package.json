@@ -1,0 +1,13 @@
+{
+  "name": "zk-flow",
+  "version": "0.0.1",
+  "type": "module",
+  "license": "Apache-2.0",
+  "private": true,
+  "scripts": {
+    "test": "node --test",
+    "build": "node build.js",
+    "prepare": "node build.js",
+    "pretest": "node build.js"
+  }
+}

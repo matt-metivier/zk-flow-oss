@@ -1,0 +1,51 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "DailyDigest",
+  "description": "Deterministic end-of-day cross-machine handoff for one host: what was worked on, which beads were touched, commits, and open loops. Written by scripts/daily-rollup.sh to a host-scoped bead (zk-flow-daily-<host>-<YYYYMMDD>, label daily-digest) and read by /remember the next day.",
+  "type": "object",
+  "required": ["threads", "beads_touched", "commits", "open_loops", "host", "date"],
+  "properties": {
+    "threads": {
+      "type": "array",
+      "description": "Per working-directory activity: which beads were touched in each cwd today",
+      "items": {
+        "type": "object",
+        "required": ["cwd", "beads"],
+        "properties": {
+          "cwd": { "type": "string" },
+          "beads": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    },
+    "beads_touched": {
+      "type": "array",
+      "description": "Distinct bead ids derived from run branches active today",
+      "items": { "type": "string" }
+    },
+    "commits": {
+      "type": "array",
+      "description": "git commits in the zk-flow repo since midnight (short-sha + subject)",
+      "items": { "type": "string" }
+    },
+    "open_loops": {
+      "type": "array",
+      "description": "Beads still in_progress at rollup time — the work to resume tomorrow",
+      "items": {
+        "type": "object",
+        "required": ["id", "title"],
+        "properties": {
+          "id": { "type": "string" },
+          "title": { "type": "string" }
+        }
+      }
+    },
+    "host": {
+      "type": "string",
+      "description": "Lowercased hostname -s; makes the bead id host-scoped so 4 machines never write-conflict"
+    },
+    "date": {
+      "type": "string",
+      "description": "YYYYMMDD the digest covers"
+    }
+  }
+}

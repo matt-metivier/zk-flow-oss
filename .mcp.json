@@ -1,0 +1,20 @@
+{
+  "mcpServers": {
+    "repomix": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "repomix",
+        "--mcp"
+      ]
+    },
+    "octocode": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "octocode-mcp"
+      ]
+    }
+  }
+}

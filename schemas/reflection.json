@@ -1,0 +1,140 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ReflectionOutput",
+  "description": "Output of the improve workflow's Reflect phase: the reflector's proposal batch plus a cycle summary. Schema-forced because the Stage phase reads proposals[] off this value -- when the call had no schema the agent returned prose and every downstream read silently saw undefined, so a cycle could never stage anything.",
+  "type": "object",
+  "required": [
+    "proposals",
+    "cycle_summary"
+  ],
+  "properties": {
+    "proposals": {
+      "type": "array",
+      "maxItems": 8,
+      "description": "At most 8 ActionableProposals for this cycle. Empty array is valid and means the window was clean.",
+      "items": {
+        "type": "object",
+        "required": [
+          "finding",
+          "category",
+          "proposal",
+          "target",
+          "mutation_type",
+          "priority",
+          "effort"
+        ],
+        "properties": {
+          "finding": {
+            "type": "string",
+            "description": "What happened, backed by evidence from the bead chain"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "prompt_gap",
+              "skill_gap",
+              "rule_violation",
+              "process_gap",
+              "schema_gap",
+              "tool_wiring_gap",
+              "external_adoption",
+              "phase_audit",
+              "maturity_assessment"
+            ],
+            "description": "What kind of gap this proposal addresses"
+          },
+          "proposal": {
+            "type": "string",
+            "description": "Specific, actionable text change or process rule \u2014 implementable without follow-up questions"
+          },
+          "target": {
+            "type": "string",
+            "description": "File path, skill path, schema path, formula name, or config key to modify"
+          },
+          "mutation_type": {
+            "type": "string",
+            "enum": [
+              "rubric_add_criterion",
+              "rubric_remove_criterion",
+              "skill_graduate",
+              "skill_retire",
+              "prompt_tweak",
+              "schema_add_field",
+              "schema_remove_field",
+              "tool_wiring_fix",
+              "formula_restructure",
+              "agent_reconfigure",
+              "external_adopt",
+              "external_adapt",
+              "context_update",
+              "adr_create",
+              "trigger_adjust",
+              "threshold_tune"
+            ],
+            "description": "Type of mutation to apply"
+          },
+          "evidence_beads": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Bead IDs that drove this proposal's cluster"
+          },
+          "priority": {
+            "type": "string",
+            "enum": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "description": "Impact \u00d7 urgency"
+          },
+          "effort": {
+            "type": "string",
+            "enum": [
+              "small",
+              "medium",
+              "large"
+            ],
+            "description": "Estimated implementation effort"
+          },
+          "target_line_range": {
+            "type": "string",
+            "description": "Optional line range for diffable changes (e.g. 'L42-L67')"
+          },
+          "rationale": {
+            "type": "string",
+            "description": "2-3 sentences citing the cluster evidence that motivated this proposal"
+          }
+        }
+      }
+    },
+    "cycle_summary": {
+      "type": "object",
+      "required": [
+        "clusters_found",
+        "cycle_window"
+      ],
+      "properties": {
+        "clusters_found": {
+          "type": "integer",
+          "description": "How many evidence clusters the reflector formed."
+        },
+        "cycle_window": {
+          "type": "string",
+          "description": "ISO date range the reflection covers."
+        },
+        "phases_audited": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "notes": {
+          "type": "string",
+          "maxLength": 1000
+        }
+      }
+    }
+  }
+}

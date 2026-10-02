@@ -1,0 +1,26 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ClaimVote",
+  "description": "One skeptic voter's verdict on a single research finding. Default to REFUTE when uncertain. ABSTAIN counts as neither CONFIRM nor REFUTE and cannot keep a claim alive.",
+  "type": "object",
+  "required": ["claim_id", "verdict", "confidence", "rationale"],
+  "properties": {
+    "claim_id": {
+      "type": "string",
+      "description": "Index or id of the claim under review (echo the one in the prompt)"
+    },
+    "verdict": {
+      "type": "string",
+      "enum": ["REFUTE", "CONFIRM", "ABSTAIN"],
+      "description": "REFUTE = claim unsupported by its cited evidence, contradicted, overreaching, or stale; CONFIRM = well-supported by the cited file:line/source; ABSTAIN = cannot adjudicate from the evidence given"
+    },
+    "confidence": {
+      "type": "string",
+      "enum": ["high", "medium", "low"]
+    },
+    "rationale": {
+      "type": "string",
+      "description": "Specific reason grounded in the cited evidence, not a restatement of the claim"
+    }
+  }
+}

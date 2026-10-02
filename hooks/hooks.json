@@ -1,0 +1,65 @@
+{
+  "PostToolUse": [
+    {
+      "hooks": [
+        {
+          "prompt": "Large MCP output detected. If result exceeds 20 lines, use ctx_batch_execute or ctx_execute to keep raw bytes out of conversation. For Grafana results: always process through ctx_execute.",
+          "type": "prompt"
+        }
+      ],
+      "matcher": "mcp__grafana|mcp__codebase-memory-mcp|mcp__repomix|mcp__octocode"
+    }
+  ],
+  "PreCompact": [
+    {
+      "hooks": [
+        {
+          "command": "bd prime",
+          "type": "command"
+        }
+      ],
+      "matcher": ""
+    }
+  ],
+  "PreToolUse": [
+    {
+      "hooks": [
+        {
+          "prompt": "If the target is source code, prefer MCP: Octocode LSP for definition/references, codebase-memory-mcp (trace_path) for callers/blast-radius, Repomix for directory overviews. Allow Read/Grep for non-code or multi-file regex.",
+          "type": "prompt"
+        }
+      ],
+      "matcher": "Read|Grep|Glob"
+    }
+  ],
+  "Stop": [
+    {
+      "matcher": "",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/daily-accumulate.sh\""
+        },
+        {
+          "type": "command",
+          "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/improve-suggest.sh\""
+        }
+      ]
+    }
+  ],
+  "SessionStart": [
+    {
+      "hooks": [
+        {
+          "command": "bd prime",
+          "type": "command"
+        },
+        {
+          "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/load-persona.sh\"",
+          "type": "command"
+        }
+      ],
+      "matcher": ""
+    }
+  ]
+}
